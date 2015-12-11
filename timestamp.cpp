@@ -1,13 +1,9 @@
 # include <stdlib.h>
 # include <stdio.h>
 # include <time.h>
-
 # include "timestamp.hpp"
 
-/******************************************************************************/
-
 double cpu_time ( )
-
 /******************************************************************************/
 /*
   Purpose:
@@ -16,12 +12,6 @@ double cpu_time ( )
     The CPU time measurements available through this routine are often
     not very accurate.  In some cases, the accuracy is no better than
     a hundredth of a second.
-  Licensing:
-    This code is distributed under the GNU LGPL license.
-  Modified:
-    06 June 2005
-  Author:
-    John Burkardt
   Parameters:
     Output, double CPU_TIME, the current reading of the CPU clock, in seconds.
 */
@@ -45,12 +35,6 @@ int *time_numbers ( )
     9     Hour (0-23)
     45    Minute
     12    Second
-  Licensing:
-    This code is distributed under the GNU LGPL license.
-  Modified:
-    06 June 2011
-  Author:
-    John Burkardt
   Parameters:
     Output, int TIME_NUMBERS[6], the year, month, day, hour, minute and second.
 */
@@ -69,32 +53,23 @@ int *time_numbers ( )
   value[5] = tm_ptr->tm_sec;
   return value;
 }
-/******************************************************************************/
 
-void timestamp ( )
 
+void timestamp( void )
 /******************************************************************************/
 /*
   Purpose:
     TIMESTAMP prints the current YMDHMS date as a time stamp.
   Example:
     17 June 2014 09:45:54 AM
-  Licensing:
-    This code is distributed under the GNU LGPL license.
-  Modified:
-    17 June 2014
-  Author:
-    John Burkardt
   Parameters:
     None
 */
 {
 # define TIME_SIZE 40
-
   static char time_buffer[TIME_SIZE];
   const struct tm *tm;
   time_t now;
-
   now = time ( NULL );
   tm = localtime ( &now );
 
@@ -105,36 +80,27 @@ void timestamp ( )
 }
 /******************************************************************************/
 
-char *timestring ( )
-
+char* timestring( void )
 /******************************************************************************/
 /*
   Purpose:
     TIMESTRING returns the current YMDHMS date as a string.
   Example:
     31 May 2001 09:45:54 AM
-  Licensing:
-    This code is distributed under the GNU LGPL license.
-  Modified:
-    15 January 2014
-  Author:
-    John Burkardt
   Parameters:
     Output, char *TIMESTRING, a string containing the current YMDHMS date.
 */
 {
 # define TIME_SIZE 40
-
   const struct tm *tm;
   size_t len;
   time_t now;
   char *s;
-
   now = time ( NULL );
   tm = localtime ( &now );
-
   s = ( char * ) malloc ( TIME_SIZE * sizeof ( char ) );
-  len = strftime ( s, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm );
+  len = strftime ( s, TIME_SIZE, "%Y%m%d%I%M%S", tm );
+  printf("timestamp: %s\n", s);
   return s;
 # undef TIME_SIZE
 }
