@@ -7,6 +7,7 @@
 #include <stdlib.h>     /* exit, EXIT_FAILURE, srand, rand */
 #include <pstream.h>    /* redi */
 #include <time.h>       /* time */
+#include <sys/time.h>   /* gettimeofday */
 #include <limits.h>     /* UCHAR_MAX */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -79,14 +80,8 @@ int main(int argc, char* argv[]) {
   /* rsync -avqz --exclude 'backup' ~/dev/cell/ /tmp/cell */
   /* cd /tmp/cell */
 
-  // start from original cell
-  //std::streampos fsize;
-  //char * memblock;
-  // ios::ate (pointer at end) allows tellg() to directly give filesize
-  //std::ifstream file ("/home/psteger/dev/selfprog/cell",
-  //                    std::ios::in|std::ios::binary|std::ios::ate);
   FILE * file;
-  long fsize;
+  long fsize = 0;
   size_t result;
 
   file = fopen ( "/home/psteger/dev/selfprog/cell" , "rb" );
@@ -97,31 +92,19 @@ int main(int argc, char* argv[]) {
   fsize = ftell (file);
   rewind (file);
 
-  //if (!file.is_open()) {
-  //    std::cout << "Unable to open file" << std::endl;
-  //    exit(EXIT_FAILURE);
-  //  }
-  //fsize = file.tellg();
-  //memblock = new char [fsize];
-  //file.seekg (0, std::ios::beg);
-  //file.read (memblock, fsize);
-  //file.close();
-
   std::vector<char> memblock(fsize);
   std::fread(&memblock[0], sizeof(char), memblock.size(), file);
   fclose(file);
-  //file.close()
   //print_chars(memblock, fsize);
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
 
   // TODO repeat indefinitely in a later step
-  for(int i = 0; i<1000; i++){
+  for(int i = 0; i<5; i++){
     // determine number of bytes to get changed
     int cycles = 1; // TODO: rand() % 10;
     DEBUG && std::cout << "cycles = " << cycles << std::endl;
 
     // TODO set starting point to any of the active cells
-    //char * loc_memblock = new char [fsize];
     std::vector<char> loc_memblock = memblock;
 
     for(unsigned j=1; j <= cycles; j++){
@@ -132,52 +115,38 @@ int main(int argc, char* argv[]) {
       int option = rand()%3;
       if(option == 0){
         DEBUG && std::cout << "delete random byte" << std::endl;
-        if(fsize == 1){
+        if(loc_memblock.size() == 1){
           std::cerr << "Too short program: cannot delete byte" << std::endl;
           continue;
         }
-        unsigned pos_del = rand()%fsize;
+        unsigned pos_del = rand()%loc_memblock.size();
         printf("delete byte at position %d\n", pos_del);
-        unsigned size_del = int(fsize)-1;
-        //char * memblock2;
-        //memblock2 = new char [size_del];
-        std::vector<char> memblock2 (size_del);
-        for(unsigned i=0; i<fsize; i++){
-          if(i < pos_del){
-            memblock2[i] = loc_memblock[i];
-          } else {
-            memblock2[i] = loc_memblock[i+1];
-          }
-        }
-        fsize = size_del;
-        //loc_memblock = new char [size_del];
-        loc_memblock = memblock2;
+        loc_memblock.erase( loc_memblock.begin()+pos_del);
         //print_chars(loc_memblock, fsize);
       } else if (option == 1) {
         DEBUG && std::cout << "add random byte at random position" << std::endl;
-        unsigned pos_add = rand()%fsize;
+        unsigned pos_add = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
         printf("add byte %02hhx at position %d\n", val, pos_add);
-        unsigned size_add = int(fsize)+1;
-        //char * memblock3;
-        std::vector<char> memblock3 (size_add);
-        for(unsigned i=0; i<size_add; i++){
-          if(i < pos_add){
-            memblock3[i] = loc_memblock[i];
-          } else if(i == pos_add) {
-            memblock3[i] = val;
-          } else if(i > pos_add) {
-            memblock3[i] = loc_memblock[i-1];
-          }
-        }
-        fsize = size_add;
-        //loc_memblock = new char [size_add];
-        loc_memblock = memblock3;
-        //delete[] memblock3;
+        loc_memblock.insert( loc_memblock.begin()+pos_add, val);
+
+        // unsigned size_add = int(fsize)+1;
+        // std::vector<char> memblock3 (size_add);
+        // for(unsigned i=0; i<size_add; i++){
+        //   if(i < pos_add){
+        //     memblock3[i] = loc_memblock[i];
+        //   } else if(i == pos_add) {
+        //     memblock3[i] = val;
+        //   } else if(i > pos_add) {
+        //     memblock3[i] = loc_memblock[i-1];
+        //   }
+        // }
+        // fsize = size_add;
+        // loc_memblock = memblock3;
         //print_chars(loc_memblock, fsize);
       } else if (option == 2) {
         DEBUG && std::cout << "change random byte" << std::endl;
-        unsigned pos_change = rand()%fsize;
+        unsigned pos_change = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
         printf("change byte at position %d to %02hhx\n", pos_change, val);
         loc_memblock[pos_change] = val;
@@ -190,37 +159,23 @@ int main(int argc, char* argv[]) {
     DEBUG && std::cout << "finished changes" << std::endl;
     // write new cell: write memblock to new file, byte-wise
     std::string filename ("/tmp/cell/cell_");
-    //std::string str1 (loc_memblock);
-    //std::hash<std::vector<char>> vct_hash;
-    //DEBUG && std::cout << "hash string memblock: " << vct_hash(loc_memblock) << std::endl;
-    //long unsigned int ha = vct_hash(loc_memblock);
 
+    timeval tv;
+    gettimeofday(&tv, NULL);
+    // tv.tv_usec is long unsigned int
+    // std::cout << "musec: " << tv.tv_usec << std::endl;
+    std::string musec;
+    std::stringstream strstream;
+    strstream << tv.tv_usec;
+    strstream >> musec;
 
-    //std::string number;
-    //std::stringstream strstream;
-    //strstream << ts;
-    // strstream >> number;
-    // filename = filename + number;
-    filename = filename + my_timestamp();
-    std::cout << "filename with timestamp = " << filename << std::endl;
-
+    filename = filename + my_timestamp() + musec;
+    DEBUG && std::cout << "filename with timestamp = " << filename << std::endl;
 
     FILE * outfile;
-    //char buffer[] = { 'x' , 'y' , 'z' };
     outfile = fopen (filename.c_str(), "wb");
     fwrite (&loc_memblock[0] , sizeof(char), memblock.size(), outfile);
     fclose (outfile);
-    // std::ofstream outfile (filename.c_str(), std::ofstream::binary);
-    // if (!outfile.is_open())
-    //   {
-    //     std::cout << "Unable to open file for output" << std::endl;
-    //     exit(EXIT_FAILURE);
-    //   }
-    // DEBUG && std::cout << "writing file" << std::endl;
-    // outfile.write (memblock, fsize);
-    // outfile.close();
-    // DEBUG && std::cout << "newcell written" << std::endl;
-    //delete[] loc_memblock;
 
     /*     chmod 700 newcell */
     /*     # check whether cell was already tried, before trying to execute it */
