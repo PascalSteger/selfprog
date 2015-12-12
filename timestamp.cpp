@@ -100,7 +100,7 @@ char* timestring( void )
   tm = localtime ( &now );
   s = ( char * ) malloc ( TIME_SIZE * sizeof ( char ) );
   len = strftime ( s, TIME_SIZE, "%Y%m%d%I%M%S", tm );
-  printf("timestamp: %s\n", s);
+  //printf("timestamp: %s\n", s);
   return s;
 # undef TIME_SIZE
 }
