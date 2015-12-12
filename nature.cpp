@@ -24,6 +24,8 @@
 #include "intelligence.hpp"
 #include "timestamp.hpp"
 
+typedef std::vector<unsigned char> vuc;
+
 bool DEBUG = false;
 
 void print_chars(char* mem, int siz){
@@ -36,7 +38,7 @@ void print_chars(char* mem, int siz){
     }
   }
   std::cout << std::endl;}
-void print_chars_v(std::vector<unsigned char> mem){
+void print_chars_v(vuc mem){
   for(unsigned int i=0; i<mem.size(); ++i){
     printf(" %02hx", mem[i]);
     if(i % 16 == 15) {
@@ -127,6 +129,14 @@ std::string musec( void ){
   strstream >> mus;
   return mus;}
 
+vuc my_hash(vuc mem) {
+  unsigned char ha[20];
+  SHA1(&mem[0], mem.size(), ha);
+  std::string myha = reinterpret_cast<const char*>(ha);
+  std::vector<unsigned char> vmyha (myha.begin(), myha.end());
+  //print_chars_v(vmyha);
+  return vmyha;}
+
 int main(int argc, char* argv[]) {
   // initialize to always the same random number
   srand (1919); // if working, use srand(time(NULL))
@@ -161,41 +171,34 @@ int main(int argc, char* argv[]) {
   fsize = ftell (file);
   rewind (file);
 
-  std::vector<unsigned char> memblock(fsize);
+  vuc memblock(fsize);
   std::fread(&memblock[0], sizeof(unsigned char), memblock.size(), file);
   fclose(file);
   //print_chars(memblock, fsize);
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
 
-
   // need std::multimap for storing multiple std::vector values at same key
-  std::multimap<std::vector<unsigned char>, std::vector<unsigned char>> mymultimap;
-  std::multimap<std::vector<unsigned char>, std::vector<unsigned char>>::iterator it;
+  std::multimap<vuc, vuc> genepool;
+  //std::multimap<vuc, vuc>::iterator it;
 
-  unsigned char ha[20];
-  /* first argument needs to be an unsigned char pointer
-   * second argument is number of bytes in the first argument
-   * last argument is our buffer, which needs to be able to hold
-   * the 16 byte result of the MD5 operation */
-  SHA1(&memblock[0], memblock.size(), ha);
-  std::string myha = reinterpret_cast<const char*>(ha);
-  std::vector<unsigned char> vmyha (myha.begin(), myha.end());
-  print_chars_v(vmyha);
-  mymultimap.insert(std::pair<std::vector<unsigned char>, std::vector<unsigned char>>(vmyha, memblock));
+  vuc vmyha = my_hash(memblock);
+  genepool.insert(std::pair<vuc, vuc>(vmyha, memblock));
 
-  std::cout << "gene pool size: " << mymultimap.size() << std::endl;
-  for (it=mymultimap.begin(); it!=mymultimap.end(); ++it) {
-    print_chars_v((*it).first);
-    print_chars_v((*it).second);
-  }
+  std::cout << "gene pool size: " << genepool.size() << std::endl;
+  //for (it=mymultimap.begin(); it!=genepool.end(); ++it) {
+  //  print_chars_v((*it).first);
+  //  print_chars_v((*it).second);
+  //}
+
   // TODO repeat indefinitely in a later step
-  for(unsigned int i = 0; i<10; i++){
+  for(unsigned int i = 0; i<100000; i++){
     // determine number of bytes to get changed
     int cycles = rand() % 10;
+    //cycles = 1; // TODO: comment
     DEBUG && std::cout << "cycles = " << cycles << std::endl;
 
     // TODO set starting point to any of the active cells
-    std::vector<unsigned char> loc_memblock = memblock;
+    vuc loc_memblock = memblock;
 
     for(unsigned int j=1; j <= cycles; j++){
       // choose of three options:
@@ -210,63 +213,64 @@ int main(int argc, char* argv[]) {
           continue;
         }
         unsigned pos_del = rand()%loc_memblock.size();
-        printf("delete byte at position %d\n", pos_del);
+        DEBUG && printf("delete byte at position %d\n", pos_del);
         loc_memblock.erase( loc_memblock.begin()+pos_del);
         //print_chars(loc_memblock, fsize);
       } else if (option == 1) {
         DEBUG && std::cout << "add random byte at random position" << std::endl;
         unsigned pos_add = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
-        printf("add byte %02hhx at position %d\n", val, pos_add);
+        DEBUG && printf("add byte %02hhx at position %d\n", val, pos_add);
         loc_memblock.insert( loc_memblock.begin()+pos_add, val);
       } else if (option == 2) {
         DEBUG && std::cout << "change random byte" << std::endl;
         unsigned pos_change = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
-        printf("change byte at position %d to %02hhx\n", pos_change, val);
+        DEBUG && printf("change byte at position %d to %02hhx\n", pos_change, val);
         loc_memblock[pos_change] = val;
         //print_chars(loc_memblock, fsize);
       } else {
-        DEBUG && std::cout << "option must be one of 1,2,3, got " << option << std::endl;
+        std::cerr << "option must be one of 1,2,3, got " << option << std::endl;
         exit(1);
       }    }
     DEBUG && std::cout << "finished changes" << std::endl;
-    // write new cell: write memblock to new file, byte-wise
-    std::string filename ("/tmp/cell/cell_");
 
+    /********************  compare to old genes   ********************/
+    // get hash of gene = vuc
+    vuc vmyha = my_hash(loc_memblock);
+
+    // find all programs with same hash
+    std::pair <std::multimap<vuc,vuc>::iterator, std::multimap<vuc,vuc>::iterator> ret;
+    ret = genepool.equal_range(vmyha);
+    bool found_old = false;
+    for (std::multimap<vuc,vuc>::iterator it=ret.first; it!=ret.second; ++it){
+      // compare new vuc to all previous ones
+      // if old found => continue
+      if(loc_memblock == it->second){
+        std::cout << "found old gene" << std::endl;
+        // print_chars_v(it->second);
+        found_old = true;
+        break;
+      }
+    }
+    if(found_old) continue;
+
+    // store new (hash, vuc) key-value-pair
+    genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
+    std::cout << "gene pool size: " << genepool.size() << std::endl;
+
+    /********************  write new cell         ********************/
+    // write memblock to new file, byte-wise
+    std::string filename ("/tmp/cell/cell_");
     filename = filename + my_timestamp() + musec();
     DEBUG && std::cout << "filename with timestamp = " << filename << std::endl;
-
     FILE * outfile;
     outfile = fopen (filename.c_str(), "wb");
     fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), outfile);
     fclose (outfile);
 
-    // make file executable
+    /********************  make file executable   ********************/
     chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
-
-
-    /*     # check whether cell was already tried, before trying to execute it */
-    /*     hashi=$(md5sum newcell | cut -d' ' -f1) */
-    /*     donetried=$(grep -c $hashi history) */
-    /*     if (( $donetried > 0 )) */
-    /*     then */
-    /*         echo "tried already" */
-    /*         continue */
-    /*     fi */
-    /*     echo '$hashi' >> history */
-
-
-    // get hash of gene = std::vector<char>
-
-    // find all programs with same hash
-
-    // compare new std::vector<char> to all previous ones
-
-    // if old found => continue
-
-    // store new hash, std::vector<char> key-value-pair
-
 
     /*     $(./newcell < input > output &> /dev/null; echo $? > exitcode ) & */
     /*     success=999 */
