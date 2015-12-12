@@ -65,11 +65,12 @@ std::string my_system( std::string command) {
   // run a process and create a streambuf that reads its stdout and stderr
   redi::ipstream proc(command, redi::pstreams::pstderr|redi::pstreams::pstdout);
   std::string line;
-  // read child's stderr
-  //while (proc >> line)
-  //  std::cout << "output: " << line << std::endl;
-  std::string str;
-  std::getline(proc, str, '\0');
+  // read child's stderr and stdout
+  std::string str ("");
+  while (proc >> line){
+    //std::cout << "output: " << line << std::endl;
+    str += line + "\n";
+  }
   return str;}
 
 static void show_usage( std::string name ) {
@@ -177,6 +178,14 @@ int main(int argc, char* argv[]) {
   //print_chars(memblock, fsize);
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
 
+  /********************  define input to learn intelligent answers ********************/
+  FILE * input;
+  input = fopen ("/tmp/cell/input", "wb");
+  std::string strin ("3*3\n4*3\n2*7");
+  fwrite (&(strin.c_str())[0] , sizeof(char), strin.size(), input);
+  fclose (input);
+
+  /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
   std::multimap<vuc, vuc> genepool;
   //std::multimap<vuc, vuc>::iterator it;
@@ -191,7 +200,7 @@ int main(int argc, char* argv[]) {
   //}
 
   // TODO repeat indefinitely in a later step
-  for(unsigned int i = 0; i<100000; i++){
+  for(unsigned int i = 0; i<10; i++){
     // determine number of bytes to get changed
     int cycles = rand() % 10;
     //cycles = 1; // TODO: comment
@@ -272,6 +281,12 @@ int main(int argc, char* argv[]) {
     /********************  make file executable   ********************/
     chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 
+    /********************  execute with sample input text ********************/
+    // NEXT
+    std::string output;
+    output = my_system("ls");
+    //output = my_system(filename+" < /tmp/cell/input"); // > /tmp/cell/output &> /dev/null; echo $? > exitcode");
+    std::cout << "output: " << output << std::endl;
     /*     $(./newcell < input > output &> /dev/null; echo $? > exitcode ) & */
     /*     success=999 */
     /*     PID=$(ps ax|grep newcell|grep -iv grep|awk '{print $1}') */
@@ -296,51 +311,39 @@ int main(int argc, char* argv[]) {
     /*     fi */
     /* done */
 
-    /* # single out the new ones */
-    /* cd backup */
-    /* mkdir -p singles */
-    /* ls cell* > filelist */
-    /* cd /tmp/cell */
-    /* cat backup/filelist | */
-    /*     while read nextfile */
-    /*     do */
-    /*         hashi=$(md5sum backup/$nextfile | sort | cut -d' ' -f1) */
-    /*         nof=$(grep -c $hashi recompiles/msum) */
-    /*         if (( $nof > 0 )) */
-    /*         then */
-    /*             echo backup/$nextfile " already exists" */
-    /*             rm backup/$nextfile */
-    /*         else */
-    /*             #echo backup/$nextfile " is different from all others!" */
-    /*             mv backup/$nextfile singles */
-    /*         fi */
-    /*     done */
-
-    /* cd /tmp/cell */
-    /* mkdir -p recompiles */
-    /* cd singles */
-    /* ls cell* > filelist */
-    /* cd /tmp/cell */
-    /* echo "sorting out non-reproductive cells" */
-    /* cat singles/filelist | */
-    /*     while read nextfile */
-    /*     do */
-    /*         rm -f outcell */
-    /*         touch outcell */
+    /********************  sorting out non-reproductive cells ********************/
     /*         od -An -tx1 singles/$nextfile > progcell */
-    /*         ./singles/$nextfile < progcell > outcell */
-    /*         if diff singles/$nextfile outcell >/dev/null */
-    /*         then */
-    /*             echo "new recompiling: " $nextfile */
-    /*             mv singles/$nextfile recompiles */
-    /*         else */
-    /*             rm singles/$nextfile */
-    /*         fi */
-    /*     done */
+    FILE * progcell;
+    progcell = fopen ("/tmp/cell/progcell", "wb");
+    // get char values one by one, in hex representation
+    for(unsigned int i=0; i<loc_memblock.size(); i++){
+    // TODO put in std::string
+      fprintf(progcell, " %02hhx", loc_memblock[i]);
+    }
+    fclose (progcell);
 
-    /* cd /tmp/cell/recompiles */
-    /* md5sum cell* | cut -d' ' -f1 > msum */
-    /* cp /tmp/cell/recompiles/\* /home/psteger/dev/cell/recompiles */
-    /* cp /tmp/cell/history /home/psteger/dev/cell/ */
+    /*         ./singles/$nextfile < progcell > outcell */
+    my_system(filename + " < /tmp/cell/progcell > /tmp/cell/outcell");
+
+    /********************  read in output of cell run on itself ********************/
+    FILE * compfile;
+    long outfsize = 0;
+    compfile = fopen ( "/tmp/cell/outcell" , "rb" );
+    if (compfile==NULL) {fputs ("File error", stderr); exit (1);}
+    // obtain file size:
+    fseek (compfile , 0 , SEEK_END);
+    outfsize = ftell (compfile);
+    rewind (compfile);
+    vuc outblock(outfsize);
+    std::fread(&outblock[0], sizeof(unsigned char), outblock.size(), compfile);
+    fclose(compfile);
+    DEBUG && std::cout << "the cell output content is in memory" << std::endl;
+
+    if(outblock == loc_memblock){
+      std::cout << "new recompiling cell" << std::endl;
+    } else {
+      remove(filename.c_str());}
+    remove("/tmp/cell/outcell");
+
   }
 }
