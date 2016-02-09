@@ -2,6 +2,7 @@ CFLAGS = -g -O0 #-fpermissive
 CXXFLAGS = -g -O0 -std=c++11
 
 all: nature.exe
+	./nature.exe
 
 timestamp.o: timestamp.cpp timestamp.hpp
 	g++ $(CXXFLAGS) -c timestamp.cpp

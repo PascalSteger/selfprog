@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
   //}
 
   // TODO repeat indefinitely in a later step
-  for(unsigned int i = 0; i<10; i++){
+  for(unsigned int i = 0; i<1000; i++){
     // determine number of bytes to get changed
     int cycles = rand() % 10;
     //cycles = 1; // TODO: comment
@@ -284,11 +284,12 @@ int main(int argc, char* argv[]) {
     /********************  execute with sample input text ********************/
     // NEXT
     std::string output;
-    output = my_system("ls");
-    //output = my_system(filename+" < /tmp/cell/input"); // > /tmp/cell/output &> /dev/null; echo $? > exitcode");
-    std::cout << "output: " << output << std::endl;
-    /*     $(./newcell < input > output &> /dev/null; echo $? > exitcode ) & */
-    /*     success=999 */
+    //output = my_system("ls");
+    output = my_system(filename+" < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?"); //echo $? > exitcode
+    //std::cout << "output: " << output << std::endl;
+    //int success=999;
+    /* check new program exits after finite time */
+    /* or even better: kill any program after fixed time (if it has not finished by then) */
     /*     PID=$(ps ax|grep newcell|grep -iv grep|awk '{print $1}') */
     /*     if [[ -n "$PID" ]] */
     /*     then */
