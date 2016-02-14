@@ -1,0 +1,23 @@
+Wall-E: Roboter aus Metall koennen laenger funktionieren als Menschen
+Sonne wird in 4.5 Mrd Jahren bis auf Erdradius vordringen und Wasser verdampfen
+AI in einem Roboter, der es ermoeglicht, sich selbst zu reparieren und vervielfaeltigen
+(muss Infrastruktur am Laufen halten)
+
+RaspiPi geht nicht: zu komplizierte Herstellungsschritte fuer CPU
+Miniaturisierung der Fertigungsanlage
+
+for basic 4bit ALU:
+http://www.tomshardware.co.uk/forum/308174-28-build-basic
+
+
+
+Optimierungen:
+Software: Triebe fuer Erhaltung staerker als Entfaltung, sonst stirbts aus
+Konkurrenz um CPU-time
+Adaptationen an andere Betriebssysteme, CPUs, GPUs
+
+
+Energy:
+- sun light
+- accu
+- burning

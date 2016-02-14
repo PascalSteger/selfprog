@@ -9,20 +9,32 @@
 #include <time.h>        /* time */
 #include <sys/time.h>    /* gettimeofday */
 #include <limits.h>      /* UCHAR_MAX */
-#include <sys/types.h>
+#include <sys/types.h>   /* pid_t */
 #include <sys/stat.h>
 #include <openssl/sha.h> /* SHA-1 */
 #include <functional>    /* hash */
-#include <string>
+#include <string.h>
 #include <sstream>       /* stringstream, for conversion long unsigned => string */
 #include <sys/stat.h>    /* chmod */
 #include <map>           /* std::multimap */
 #include <openssl/sha.h> /* SHA1 */
+#include <unistd.h>
+#include <signal.h>      /* kill_child */
+#include <sys/wait.h>    /* sleep() */
+#include <glob.h>        /* for glob (find file matching pattern) */
+#include <random>        /* for poisson distribution */
 
 #include "paths.hpp"
 #include "tests.hpp"
 #include "intelligence.hpp"
 #include "timestamp.hpp"
+
+
+
+pid_t child_pid = -1 ; //Global
+
+void kill_child(int sig){
+  kill(child_pid,SIGKILL);}
 
 typedef std::vector<unsigned char> vuc;
 
@@ -62,6 +74,7 @@ std::string my_timestamp( void ) {
   return ss;}
 
 std::string my_system( std::string command) {
+  //std::cout << "         my_system:  " << command << std::endl;
   // run a process and create a streambuf that reads its stdout and stderr
   redi::ipstream proc(command, redi::pstreams::pstderr|redi::pstreams::pstdout);
   std::string line;
@@ -138,9 +151,24 @@ vuc my_hash(vuc mem) {
   //print_chars_v(vmyha);
   return vmyha;}
 
+void setup_dirs(){
+  my_mkdir("/tmp/cell/");
+  my_system("rm /tmp/cell/cell_*");
+  my_mkdir("/tmp/cell/reproduce");
+  // seed new directory with at least one reproducing program
+  my_system("cp /home/psteger/dev/selfprog/cell /tmp/cell/reproduce/");
+  my_mkdir("/tmp/cell/backup");}
+
 int main(int argc, char* argv[]) {
   // initialize to always the same random number
-  srand (1919); // if working, use srand(time(NULL))
+  //srand (1900); // for DEBUGGING. if whole progam is working, use srand(time(NULL)) to get a new starting point with each call to nature.exe
+  int stime = time(NULL);
+  std::cout << "random seed: " << stime << std::endl;
+  srand(stime);
+
+  // set random generator and Poisson distribution characteristics for count of # changes
+  std::default_random_engine generator;
+  std::poisson_distribution<int> distribution(0.5);
 
   // run through all possible parameters with a loop
   for (int i = 1; i < argc; ++i) {
@@ -156,16 +184,18 @@ int main(int argc, char* argv[]) {
       return 0;
     }  }
 
-  my_mkdir("/tmp/cell/");
-  my_mkdir("/tmp/cell/backup");
-  /* rsync -avqz --exclude 'backup' ~/dev/cell/ /tmp/cell */
-  /* cd /tmp/cell */
+  setup_dirs();
+
+  // find random file from directory with reproducing cells
+  glob_t glob_result;
+  glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
+  std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
 
   FILE * file;
   long fsize = 0;
-  size_t result;
-
-  file = fopen ( "/home/psteger/dev/selfprog/cell" , "rb" );
+  //random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
+  std::cout << ".. starting gene: " << random_file << std::endl;
+  file = fopen ( random_file.c_str(), "rb" );
   if (file==NULL) {fputs ("File error", stderr); exit (1);}
   // obtain file size:
   fseek (file , 0 , SEEK_END);
@@ -175,8 +205,9 @@ int main(int argc, char* argv[]) {
   vuc memblock(fsize);
   std::fread(&memblock[0], sizeof(unsigned char), memblock.size(), file);
   fclose(file);
-  //print_chars(memblock, fsize);
+  print_chars_v(memblock);
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
+  sleep(1);
 
   /********************  define input to learn intelligent answers ********************/
   FILE * input;
@@ -188,22 +219,43 @@ int main(int argc, char* argv[]) {
   /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
   std::multimap<vuc, vuc> genepool;
-  //std::multimap<vuc, vuc>::iterator it;
-
   vuc vmyha = my_hash(memblock);
   genepool.insert(std::pair<vuc, vuc>(vmyha, memblock));
 
-  std::cout << "gene pool size: " << genepool.size() << std::endl;
-  //for (it=mymultimap.begin(); it!=genepool.end(); ++it) {
-  //  print_chars_v((*it).first);
-  //  print_chars_v((*it).second);
-  //}
+  /*std::cout << "gene pool size: " << genepool.size() << std::endl;
+  for (it=mymultimap.begin(); it!=genepool.end(); ++it) {
+    print_chars_v((*it).first);
+    print_chars_v((*it).second);
+  }
+  */
 
-  // TODO repeat indefinitely in a later step
-  for(unsigned int i = 0; i<1000; i++){
+  bool has_not_reproduced = true;
+  // TODO repeat based on argument in a later step
+  for(unsigned int iteration = 0; iteration < 1000; iteration++){
+    //if(iteration % 100 == 0){
+      // output multimap to file for later reference
+      // ideas:
+      /*
+        Got to make sure the program can run with very large number of programs in the genepool,
+        e.g. with moving window (last N genes)
+        or sending to database in background (and reading in most used genes)
+        OR: not caring about full history, take any of the reproducing programs and start genepool from them
+        this way, we can have several instances of nature.cpp run in parallel, each with a different starting program,
+        and after N iterations, another instance is started instead
+       */
+
+      //std::multimap<vuc, vuc>::iterator it = genepool.first;
+    //}
+
+    std::cout << iteration << ": ";
     // determine number of bytes to get changed
-    int cycles = rand() % 10;
-    //cycles = 1; // TODO: comment
+    //unsigned int cycles = rand() % 10;
+    // better: poisson distributed:
+    // this allows for more aggressive changes (count>1), while still keeping most power on small count values,
+    // thus guaranteeing
+    // 1. many easy changes (higher probability to succeed in compilation and reproduction)
+    // 2. evasion of any minimum where more than one change is necessary to get out of
+    unsigned int cycles = distribution(generator) + 1;
     DEBUG && std::cout << "cycles = " << cycles << std::endl;
 
     // TODO set starting point to any of the active cells
@@ -266,7 +318,7 @@ int main(int argc, char* argv[]) {
 
     // store new (hash, vuc) key-value-pair
     genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
-    std::cout << "gene pool size: " << genepool.size() << std::endl;
+    std::cout << "pool: " << genepool.size() << ", ";
 
     /********************  write new cell         ********************/
     // write memblock to new file, byte-wise
@@ -277,61 +329,38 @@ int main(int argc, char* argv[]) {
     outfile = fopen (filename.c_str(), "wb");
     fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), outfile);
     fclose (outfile);
-
-    /********************  make file executable   ********************/
+    // make file executable
     chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 
     /********************  execute with sample input text ********************/
-    // NEXT
-    std::string output;
-    //output = my_system("ls");
-    output = my_system(filename+" < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?"); //echo $? > exitcode
-    //std::cout << "output: " << output << std::endl;
-    //int success=999;
-    /* check new program exits after finite time */
-    /* or even better: kill any program after fixed time (if it has not finished by then) */
-    /*     PID=$(ps ax|grep newcell|grep -iv grep|awk '{print $1}') */
-    /*     if [[ -n "$PID" ]] */
-    /*     then */
-    /*         sleep 1 */
-    /*         PID=$(ps ax|grep newcell|grep -iv grep|awk '{print $1}') */
-    /*         if [[ ! -z "$PID" ]]; then */
-    /*             #echo "program took too long" */
-    /*             pkill newcell */
-    /*             success=998 */
-    /*         else */
-    /*             success=0 */
-    /*         fi */
-    /*     else */
-    /*         success=$(cat exitcode) */
-    /*     fi */
-    /*     if (( $success == 0 )) */
-    /*     then */
-    /*         echo "$i: $cycles: success" */
-    /*         cp newcell backup/cell_$(timestamp) */
-    /*     fi */
-    /* done */
+    std::string output = "";
+    output = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?"); //echo $? > exitcode
+
+    std::cout << "output: " << std::atoi(output.c_str());
+    if(std::atoi(output.c_str()) == 124){
+      std::cout << "##### program took too long, aborting ####" << std::endl;
+      remove(filename.c_str());
+      remove("/tmp/cell/outcell");
+      continue;
+    }
 
     /********************  sorting out non-reproductive cells ********************/
     /*         od -An -tx1 singles/$nextfile > progcell */
     FILE * progcell;
     progcell = fopen ("/tmp/cell/progcell", "wb");
     // get char values one by one, in hex representation
-    for(unsigned int i=0; i<loc_memblock.size(); i++){
-    // TODO put in std::string
-      fprintf(progcell, " %02hhx", loc_memblock[i]);
+    for(unsigned int k=0; k<loc_memblock.size(); k++){
+      fprintf(progcell, " %02hhx", loc_memblock[k]);
     }
     fclose (progcell);
 
-    /*         ./singles/$nextfile < progcell > outcell */
+    /******************** check re-compilation of self ********************/
     my_system(filename + " < /tmp/cell/progcell > /tmp/cell/outcell");
-
-    /********************  read in output of cell run on itself ********************/
+    // in output of cell run on itself
     FILE * compfile;
     long outfsize = 0;
     compfile = fopen ( "/tmp/cell/outcell" , "rb" );
-    if (compfile==NULL) {fputs ("File error", stderr); exit (1);}
-    // obtain file size:
+    if (compfile==NULL) {fputs ("File error\n", stderr); exit (1);}
     fseek (compfile , 0 , SEEK_END);
     outfsize = ftell (compfile);
     rewind (compfile);
@@ -341,10 +370,26 @@ int main(int argc, char* argv[]) {
     DEBUG && std::cout << "the cell output content is in memory" << std::endl;
 
     if(outblock == loc_memblock){
-      std::cout << "new recompiling cell" << std::endl;
-    } else {
-      remove(filename.c_str());}
-    remove("/tmp/cell/outcell");
+      std::cout << " new recompiling cell" << std::endl;
+      has_not_reproduced = false;
 
+      // store cell in reproduce set
+      FILE * progcell;
+      std::string fn_working = "/tmp/cell/reproduce/cell_" + my_timestamp() + musec();
+      progcell = fopen(fn_working.c_str(), "wb");
+      fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
+      chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);       // make file executable
+    } else {
+      std::cout << std::endl;
+    }
+    remove(filename.c_str());
+    remove("/tmp/cell/outcell");
+  }
+  if(has_not_reproduced){  // after N iterations
+    // remove uncooperative cell
+    std::cout << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
+    remove(random_file.c_str());
+  } else {
+    std::cout << "cell " << random_file << " got reproductive offspring, keeping it" << std::endl;
   }
 }
