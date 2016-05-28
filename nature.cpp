@@ -19,7 +19,7 @@
 #include <map>           /* std::multimap */
 #include <openssl/sha.h> /* SHA1 */
 #include <unistd.h>
-#include <signal.h>      /* kill_child */
+/*#include <signal.h>      // kill_child */
 #include <sys/wait.h>    /* sleep() */
 #include <glob.h>        /* for glob (find file matching pattern) */
 #include <random>        /* for poisson distribution */
@@ -29,15 +29,16 @@
 #include "intelligence.hpp"
 #include "timestamp.hpp"
 
-
-
-pid_t child_pid = -1 ; //Global
-
-void kill_child(int sig){
-  kill(child_pid,SIGKILL);}
+struct param_struct {
+  unsigned Niterations;
+  float pois_cycles;};
+struct status_struct {
+  unsigned N;
+  unsigned poolsize;
+  unsigned nu = 0;
+};
 
 typedef std::vector<unsigned char> vuc;
-
 bool DEBUG = false;
 
 void print_chars(char* mem, int siz){
@@ -87,7 +88,7 @@ std::string my_system( std::string command) {
   return str;}
 
 static void show_usage( std::string name ) {
-    std::cerr << "Usage: " << name << " <option(s)> SOURCES"
+    std::cerr << "Usage: " << name << " <option(s)>"
               << "Options:\n"
               << "\t-h,--help\t\tShow this help message\n"
               << "\t-t,--test\t\tTest functionality\n"
@@ -159,62 +160,105 @@ void setup_dirs(){
   my_system("cp /home/psteger/dev/selfprog/cell /tmp/cell/reproduce/");
   my_mkdir("/tmp/cell/backup");}
 
-int main(int argc, char* argv[]) {
-  // initialize to always the same random number
-  //srand (1900); // for DEBUGGING. if whole progam is working, use srand(time(NULL)) to get a new starting point with each call to nature.exe
+void define_sample_input(){
+  FILE * input;
+  input = fopen ("/tmp/cell/input", "wb");
+  std::string strin ("3*3\n4*3\n2*7");
+  fwrite (&(strin.c_str())[0] , sizeof(char), strin.size(), input);
+  fclose (input);}
+
+std::string find_random_starting_cell(){
+  glob_t glob_result;
+  glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
+  std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
+  return random_file;}
+
+FILE* set_starting_file(std::string random_file){
+  FILE * file;
+  //random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
+  std::cout << ".. starting gene: " << random_file << std::endl;
+  file = fopen ( random_file.c_str(), "rb" );
+  if (file==NULL) {fputs ("File error", stderr); exit (1);}
+  return file;}
+
+long find_filesize(FILE* file){
+  fseek (file , 0 , SEEK_END);
+  long fsize = ftell (file);
+  rewind (file);
+  return fsize;}
+
+void initialize_random(){
   int stime = time(NULL);
   std::cout << "random seed: " << stime << std::endl;
   srand(stime);
+  // debug option: initialize to always the same random number
+  //srand (1900); // for DEBUGGING. if whole progam is working, use srand(time(NULL)) to get a new starting point with each call to nature.exe
+  return;}
 
-  // set random generator and Poisson distribution characteristics for count of # changes
-  std::default_random_engine generator;
-  std::poisson_distribution<int> distribution(0.5);
+param_struct parse_params( int argc, char* argv[]){
+  param_struct fill;
+  fill.Niterations = 1000;
+  fill.pois_cycles = 0.5;
 
-  // run through all possible parameters with a loop
+  // run through all possible runtime parameters with a loop
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
     if ((arg == "-h") || (arg == "--help")) {
       show_usage(argv[0]);
-      return 0;
+      exit(0);
     }
     else if ((arg == "-t") || (arg == "--test")) {
       test_my_mkdir();
       //test_timestamp();
       //test_copy();
-      return 0;
-    }  }
+      exit(0);
+    } else if ((arg == "-i") || (arg == "--iterations")) {
+      if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+        fill.Niterations = atoi(argv[++i]); // Increment 'i' so we don't get the argument as the next argv[i].
+      } else { // Uh-oh, there was no argument to the destination option.
+        std::cerr << "-i|--iterations option requires one argument." << std::endl;
+      }
+    } else if ((arg == "-c") || (arg == "--cycles")) {
+      if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+        fill.pois_cycles = atof(argv[++i]); // Increment 'i' so we don't get the argument as the next argv[i].
+      } else { // Uh-oh, there was no argument to the destination option.
+        std::cerr << "-c|--cycles option requires one argument." << std::endl;
+      }
+    }
+  }
+  DEBUG && std::cout << "Niterations = " << fill.Niterations << std::endl;
+  return fill;}
+
+void print_status(status_struct mystatus){
+  std::cout << "\r                                                                 \r";
+  std::cout << "N: " << mystatus.N; //<< " P: " << mystatus.poolsize;
+  std::cout << " new: " << mystatus.nu << std::flush;
+}
+
+int main(int argc, char* argv[]) {
+  param_struct params = parse_params(argc, argv);
+  status_struct now;
+
+  // set random generator and Poisson distribution characteristics for count of # changes
+  initialize_random();
+  std::default_random_engine generator;
+  std::poisson_distribution<int> distribution(params.pois_cycles);
 
   setup_dirs();
-
-  // find random file from directory with reproducing cells
-  glob_t glob_result;
-  glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
-  std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
-
-  FILE * file;
-  long fsize = 0;
-  //random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
-  std::cout << ".. starting gene: " << random_file << std::endl;
-  file = fopen ( random_file.c_str(), "rb" );
-  if (file==NULL) {fputs ("File error", stderr); exit (1);}
-  // obtain file size:
-  fseek (file , 0 , SEEK_END);
-  fsize = ftell (file);
-  rewind (file);
+  std::string random_file = find_random_starting_cell(); // find random file from directory with reproducing cells
+  // random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
+  FILE * file = set_starting_file(random_file);
+  long fsize = find_filesize(file);
+  // FILE * file;
 
   vuc memblock(fsize);
   std::fread(&memblock[0], sizeof(unsigned char), memblock.size(), file);
   fclose(file);
-  print_chars_v(memblock);
+  //print_chars_v(memblock);
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
   sleep(1);
 
-  /********************  define input to learn intelligent answers ********************/
-  FILE * input;
-  input = fopen ("/tmp/cell/input", "wb");
-  std::string strin ("3*3\n4*3\n2*7");
-  fwrite (&(strin.c_str())[0] , sizeof(char), strin.size(), input);
-  fclose (input);
+  define_sample_input();   //  define input to learn intelligent answers
 
   /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
@@ -222,16 +266,10 @@ int main(int argc, char* argv[]) {
   vuc vmyha = my_hash(memblock);
   genepool.insert(std::pair<vuc, vuc>(vmyha, memblock));
 
-  /*std::cout << "gene pool size: " << genepool.size() << std::endl;
-  for (it=mymultimap.begin(); it!=genepool.end(); ++it) {
-    print_chars_v((*it).first);
-    print_chars_v((*it).second);
-  }
-  */
-
   bool has_not_reproduced = true;
-  // TODO repeat based on argument in a later step
-  for(unsigned int iteration = 0; iteration < 1000; iteration++){
+  // main loop
+  for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
+    now.N = iteration;
     //if(iteration % 100 == 0){
       // output multimap to file for later reference
       // ideas:
@@ -249,18 +287,17 @@ int main(int argc, char* argv[]) {
 
     std::cout << iteration << ": ";
     // determine number of bytes to get changed
-    //unsigned int cycles = rand() % 10;
+    // unsigned int cycles = rand() % 10;
     // better: poisson distributed:
     // this allows for more aggressive changes (count>1), while still keeping most power on small count values,
     // thus guaranteeing
-    // 1. many easy changes (higher probability to succeed in compilation and reproduction)
-    // 2. evasion of any minimum where more than one change is necessary to get out of
+    //
+    //    1. many easy changes (higher probability to succeed in compilation and reproduction)
+    //    2. evasion of any minimum where more than one change is necessary to get out of
     unsigned int cycles = distribution(generator) + 1;
     DEBUG && std::cout << "cycles = " << cycles << std::endl;
 
-    // TODO set starting point to any of the active cells
     vuc loc_memblock = memblock;
-
     for(unsigned int j=1; j <= cycles; j++){
       // choose of three options:
       //  0: add random byte at random position,
@@ -297,8 +334,7 @@ int main(int argc, char* argv[]) {
     DEBUG && std::cout << "finished changes" << std::endl;
 
     /********************  compare to old genes   ********************/
-    // get hash of gene = vuc
-    vuc vmyha = my_hash(loc_memblock);
+    vuc vmyha = my_hash(loc_memblock);    // get hash of gene = vuc
 
     // find all programs with same hash
     std::pair <std::multimap<vuc,vuc>::iterator, std::multimap<vuc,vuc>::iterator> ret;
@@ -308,8 +344,7 @@ int main(int argc, char* argv[]) {
       // compare new vuc to all previous ones
       // if old found => continue
       if(loc_memblock == it->second){
-        std::cout << "found old gene" << std::endl;
-        // print_chars_v(it->second);
+        print_status(now);
         found_old = true;
         break;
       }
@@ -318,7 +353,8 @@ int main(int argc, char* argv[]) {
 
     // store new (hash, vuc) key-value-pair
     genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
-    std::cout << "pool: " << genepool.size() << ", ";
+    //std::cout << "pool: " << genepool.size() << ", ";
+    now.poolsize = genepool.size();
 
     /********************  write new cell         ********************/
     // write memblock to new file, byte-wise
@@ -334,13 +370,14 @@ int main(int argc, char* argv[]) {
 
     /********************  execute with sample input text ********************/
     std::string output = "";
-    output = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?"); //echo $? > exitcode
+    output = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?");
 
     std::cout << "output: " << std::atoi(output.c_str());
     if(std::atoi(output.c_str()) == 124){
-      std::cout << "##### program took too long, aborting ####" << std::endl;
+      //TODO: store in status std::cout << "##### program took too long, aborting ####\r" << std::flush;
       remove(filename.c_str());
       remove("/tmp/cell/outcell");
+      print_status(now);
       continue;
     }
 
@@ -370,8 +407,9 @@ int main(int argc, char* argv[]) {
     DEBUG && std::cout << "the cell output content is in memory" << std::endl;
 
     if(outblock == loc_memblock){
-      std::cout << " new recompiling cell" << std::endl;
       has_not_reproduced = false;
+      now.nu++;
+      print_status(now);
 
       // store cell in reproduce set
       FILE * progcell;
@@ -380,16 +418,16 @@ int main(int argc, char* argv[]) {
       fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
       chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);       // make file executable
     } else {
-      std::cout << std::endl;
+      print_status(now);
     }
     remove(filename.c_str());
     remove("/tmp/cell/outcell");
   }
   if(has_not_reproduced){  // after N iterations
     // remove uncooperative cell
-    std::cout << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
+    std::cout << std::endl << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
     remove(random_file.c_str());
   } else {
-    std::cout << "cell " << random_file << " got reproductive offspring, keeping it" << std::endl;
+    std::cout << std::endl << "cell " << random_file << " got reproductive offspring, keeping it" << std::endl;
   }
 }
