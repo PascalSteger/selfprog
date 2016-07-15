@@ -51,6 +51,7 @@ void print_chars(char* mem, int siz){
     }
   }
   std::cout << std::endl;}
+
 void print_chars_v(vuc mem){
   for(unsigned int i=0; i<mem.size(); ++i){
     printf(" %02hx", mem[i]);
