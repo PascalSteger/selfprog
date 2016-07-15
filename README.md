@@ -6,20 +6,24 @@ Project to evolve a self-replicating program
 
 SelfProg is a project to emulate the evolution of a genome in assembler.
 
+Why would we want to do this? In conventional programming, a computer program is written in a way that specifies each operation the computer has to perform. Random elements mostly apply to the data the program is working with, not the program structure itself. The algorithm can thus not change, and human interaction is needed to evolve it to a new stage.
+
+The idea behind SelfProg is to enable the program to modify itself, randomly, and to evolve a pool of such modified programs.
+
 
 
 nature.sh
 ---------
-Linux-shell based program to steer modifications and recompilation check
+Linux-shell based program to steer modifications and recompilation check. This script intends to emulate nature in the process of evolution.
 
 
 cell
 ----
-Main program, small compiler in assembler to transform bytes written out in a text file into a corresponding hex file.
+cell is the main program. It started as a small compiler in assembler to transform bytes written out in a text file into a corresponding executable hex file.
 
 recompiles
 ----------
-Directory to hold
+Directory to hold current programs that not only execute without error message, but also are able to reproduce themselves from their byte output.
 
 
 
