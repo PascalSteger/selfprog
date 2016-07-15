@@ -8,7 +8,7 @@
 #include <pstream.h>     /* redi */
 #include <time.h>        /* time */
 #include <sys/time.h>    /* gettimeofday */
-#include <limits.h>      /* UCHAR_MAX */
+#include <limits.h>      /* UCHAR_MAX, char_to_bin */
 #include <sys/types.h>   /* pid_t */
 #include <sys/stat.h>
 #include <openssl/sha.h> /* SHA-1 */
@@ -171,7 +171,6 @@ void        define_sample_input(){
 char*       read_output(){
   std::streampos size;
   char * memblock;
-
   std::ifstream file ("/tmp/cell/output", std::ios::in|std::ios::binary|std::ios::ate);
   if (file.is_open())
     {
@@ -180,7 +179,7 @@ char*       read_output(){
       file.seekg (0, std::ios::beg);
       file.read (memblock, size);
       file.close();
-      DEBUG && std::cout << "the entire file content is in memory" << std::endl;
+      DEBUG && std::cout << "the entire file content is in memory: " << memblock << std::endl;
       return memblock;
       delete[] memblock;
     }
@@ -202,15 +201,27 @@ char*       read_expect(){
       delete[] memblock;
     }
   return new char [0];};
+char *chartobin ( unsigned char c )
+{
+  static char bin[CHAR_BIT + 1] = {0};
+  int         i;
+
+  for ( i = CHAR_BIT - 1; i >= 0; i-- )
+    {
+      bin[i] = (c % 2) + '0';
+      c /= 2;
+    }
+
+  return bin;
+}
 std::string find_random_starting_cell(){
   glob_t glob_result;
   glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
   return random_file;}
-FILE*       set_starting_file(std::string random_file){
+FILE*       open_file(std::string random_file){
   FILE * file;
   //random_file = "/home/au/dev/selfprog/cell"; // override cell name with known good one
-  std::cout << ".. starting gene: " << random_file << std::endl;
   file = fopen ( random_file.c_str(), "rb" );
   if (file==NULL) {fputs ("File error", stderr); exit (1);}
   return file;}
@@ -275,10 +286,9 @@ int main(int argc, char* argv[]) {
   setup_dirs();
   std::string random_file = find_random_starting_cell(); // find random file from directory with reproducing cells
   // random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
-  FILE * file = set_starting_file(random_file);
+  std::cout << ".. starting gene: " << random_file << std::endl;
+  FILE * file = open_file(random_file);
   long fsize = find_filesize(file);
-  // FILE * file;
-
   vuc memblock(fsize);
   std::fread(&memblock[0], sizeof(unsigned char), memblock.size(), file);
   fclose(file);
@@ -456,10 +466,41 @@ int main(int argc, char* argv[]) {
       fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
       chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);       // make file executable
 
-      // check how well it performed on sample input
-      char* out = read_output();
-      char* exp = read_expect();
-      std::cout << " .. output vs expectation: " << out << " " << exp << std::endl;
+      // TODO: check how well it performed on sample input
+      // try 1: determine number of differing bytes via char reading
+      // char * out = read_output();
+      // char * expect = read_expect();
+      // unsigned int len_out = sizeof(out)/sizeof(*out);
+      // unsigned int len_expect = sizeof(expect)/sizeof(*expect);
+      // unsigned int len_max = std::max(len_out, len_expect);
+      // std::vector<char> v_out(out, out + len_out);
+      // std::vector<char> v_exp(expect, expect + len_expect);
+      // v_out.resize(len_max);
+      // v_exp.resize(len_max);
+      // std::string s_out(v_out.begin(), v_out.end());
+      // std::string s_exp(v_exp.begin(), v_exp.end());
+      // std::cout << s_out << " " << s_exp << std::endl;
+
+      // try 2: use existing framework for od-like reading
+      std::string fnout = "/tmp/cell/output";
+      FILE * fout = open_file(fnout);
+      long foutsize = find_filesize(fout);
+      vuc foutmem(foutsize);
+      std::fread(&foutmem[0], sizeof(unsigned char), foutmem.size(), fout);
+      fclose(fout);
+
+      std::cout << std::endl << " output: " << std::endl;
+      print_chars_v(foutmem);
+
+      std::string fnexp = "/tmp/cell/expect";
+      FILE * fexp = open_file(fnexp);
+      long fexpsize = find_filesize(fexp);
+      vuc fexpmem(fexpsize);
+      std::fread(&fexpmem[0], sizeof(unsigned char), fexpmem.size(), fexp);
+      fclose(fexp);
+
+      std::cout << std::endl << " expect: " << std::endl;
+      print_chars_v(fexpmem);
 
     } else {
       print_status(now);
