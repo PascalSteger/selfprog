@@ -158,22 +158,19 @@ void setup_dirs(){
   my_system("rm /tmp/cell/cell_*");
   my_mkdir("/tmp/cell/reproduce");
   // seed new directory with at least one reproducing program
-  my_system("cp /home/psteger/dev/selfprog/cell /tmp/cell/reproduce/");
+  my_system("cp /home/au/dev/selfprog/cell /tmp/cell/reproduce/");
   my_mkdir("/tmp/cell/backup");}
-
 void define_sample_input(){
   FILE * input;
   input = fopen ("/tmp/cell/input", "wb");
   std::string strin ("3*3\n4*3\n2*7");
   fwrite (&(strin.c_str())[0] , sizeof(char), strin.size(), input);
   fclose (input);}
-
 std::string find_random_starting_cell(){
   glob_t glob_result;
   glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
   return random_file;}
-
 FILE* set_starting_file(std::string random_file){
   FILE * file;
   //random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
@@ -181,13 +178,11 @@ FILE* set_starting_file(std::string random_file){
   file = fopen ( random_file.c_str(), "rb" );
   if (file==NULL) {fputs ("File error", stderr); exit (1);}
   return file;}
-
 long find_filesize(FILE* file){
   fseek (file , 0 , SEEK_END);
   long fsize = ftell (file);
   rewind (file);
   return fsize;}
-
 void initialize_random(){
   int stime = time(NULL);
   std::cout << "random seed: " << stime << std::endl;
@@ -195,12 +190,10 @@ void initialize_random(){
   // debug option: initialize to always the same random number
   //srand (1900); // for DEBUGGING. if whole progam is working, use srand(time(NULL)) to get a new starting point with each call to nature.exe
   return;}
-
 param_struct parse_params( int argc, char* argv[]){
   param_struct fill;
   fill.Niterations = 1000;
   fill.pois_cycles = 0.5;
-
   // run through all possible runtime parameters with a loop
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -229,13 +222,10 @@ param_struct parse_params( int argc, char* argv[]){
   }
   DEBUG && std::cout << "Niterations = " << fill.Niterations << std::endl;
   return fill;}
-
 void print_status(status_struct mystatus){
   std::cout << "\r                                                                 \r";
   std::cout << "N: " << mystatus.N; //<< " P: " << mystatus.poolsize;
-  std::cout << " new: " << mystatus.nu << std::flush;
-}
-
+  std::cout << " new: " << mystatus.nu << std::flush;}
 int main(int argc, char* argv[]) {
   param_struct params = parse_params(argc, argv);
   status_struct now;
