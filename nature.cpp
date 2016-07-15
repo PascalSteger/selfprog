@@ -159,13 +159,33 @@ void setup_dirs(){
   my_mkdir("/tmp/cell/reproduce");
   // seed new directory with at least one reproducing program
   my_system("cp /home/au/dev/selfprog/cell /tmp/cell/reproduce/");
+  my_system("cp /home/au/dev/selfprog/input /tmp/cell/");
+  my_system("cp /home/au/dev/selfprog/expect /tmp/cell/");
   my_mkdir("/tmp/cell/backup");}
 void define_sample_input(){
   FILE * input;
-  input = fopen ("/tmp/cell/input", "wb");
-  std::string strin ("3*3\n4*3\n2*7");
+  input = fopen ("/tmp/cell/input", "w");
+  std::string strin ("111");
   fwrite (&(strin.c_str())[0] , sizeof(char), strin.size(), input);
   fclose (input);}
+char* read_output(){
+  std::streampos size;
+  char * memblock;
+
+  std::ifstream file ("/tmp/cell/output", std::ios::in|std::ios::binary|std::ios::ate);
+  if (file.is_open())
+    {
+      size = file.tellg();
+      memblock = new char [size];
+      file.seekg (0, std::ios::beg);
+      file.read (memblock, size);
+      file.close();
+
+      DEBUG && std::cout << "the entire file content is in memory" << std::endl;
+      return memblock;
+      delete[] memblock;
+    }
+  return new char [0];};
 std::string find_random_starting_cell(){
   glob_t glob_result;
   glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
@@ -173,7 +193,7 @@ std::string find_random_starting_cell(){
   return random_file;}
 FILE* set_starting_file(std::string random_file){
   FILE * file;
-  //random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
+  //random_file = "/home/au/dev/selfprog/cell"; // override cell name with known good one
   std::cout << ".. starting gene: " << random_file << std::endl;
   file = fopen ( random_file.c_str(), "rb" );
   if (file==NULL) {fputs ("File error", stderr); exit (1);}
@@ -223,6 +243,7 @@ param_struct parse_params( int argc, char* argv[]){
   DEBUG && std::cout << "Niterations = " << fill.Niterations << std::endl;
   return fill;}
 void print_status(status_struct mystatus){
+  // delete previous output line:
   std::cout << "\r                                                                 \r";
   std::cout << "N: " << mystatus.N; //<< " P: " << mystatus.poolsize;
   std::cout << " new: " << mystatus.nu << std::flush;}
@@ -249,7 +270,9 @@ int main(int argc, char* argv[]) {
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
   sleep(1);
 
-  define_sample_input();   //  define input to learn intelligent answers
+  // TODO: replace with system to choose from set of patterns
+  //       with defined optimal outputs
+  // define_sample_input();   //  define input to learn intelligent answers
 
   /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
@@ -360,11 +383,11 @@ int main(int argc, char* argv[]) {
     chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 
     /********************  execute with sample input text ********************/
-    std::string output = "";
-    output = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?");
+    std::string erroutput = "";
+    erroutput = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?");
 
-    std::cout << "output: " << std::atoi(output.c_str());
-    if(std::atoi(output.c_str()) == 124){
+    std::cout << "erroutput: " << std::atoi(erroutput.c_str()) << " ";
+    if(std::atoi(erroutput.c_str()) == 124){
       //TODO: store in status std::cout << "##### program took too long, aborting ####\r" << std::flush;
       remove(filename.c_str());
       remove("/tmp/cell/outcell");
@@ -408,9 +431,15 @@ int main(int argc, char* argv[]) {
       progcell = fopen(fn_working.c_str(), "wb");
       fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
       chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);       // make file executable
+
+      // check how well it performed on sample input
+      char* out = read_output();
+      std::cout << " .. output of program run on /tmp/cell/input: " << out << std::endl;
+
     } else {
       print_status(now);
     }
+
     remove(filename.c_str());
     remove("/tmp/cell/outcell");
   }
