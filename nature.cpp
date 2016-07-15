@@ -41,7 +41,7 @@ struct status_struct {
 typedef std::vector<unsigned char> vuc;
 bool DEBUG = false;
 
-void print_chars(char* mem, int siz){
+void        print_chars(char* mem, int siz){
   // print char values one by one, in hex representation
   for(int i=0; i<siz; i++){
     //std::cout << int(mem[i]) << " ";
@@ -52,7 +52,7 @@ void print_chars(char* mem, int siz){
   }
   std::cout << std::endl;}
 
-void print_chars_v(vuc mem){
+void        print_chars_v(vuc mem){
   for(unsigned int i=0; i<mem.size(); ++i){
     printf(" %02hx", mem[i]);
     if(i % 16 == 15) {
@@ -61,7 +61,7 @@ void print_chars_v(vuc mem){
   }
   std::cout << std::endl;}
 
-int my_mkdir(std::string dirname) {
+int         my_mkdir(std::string dirname) {
   struct stat st = {0};
   if (stat(dirname.c_str(), &st) == -1) {
     mkdir(dirname.c_str(), 0700);
@@ -95,7 +95,7 @@ static void show_usage( std::string name ) {
               << "\t-t,--test\t\tTest functionality\n"
               << std::endl;}
 
-int test_my_mkdir( void ) {
+int         test_my_mkdir( void ) {
   std::string dirname = "/home/psteger/test/";
   std::vector<char> writable(dirname.begin(), dirname.end());
   writable.push_back('\0');
@@ -118,7 +118,7 @@ std::string test_my_system( void ){
   std::string out = my_system(cmd);
   return out;}
 
-int test_equalFiles( void){
+int         test_equalFiles( void){
   std::ofstream infile;
   infile.open ("input.dat");
   infile << "37" << std::endl;
@@ -145,7 +145,7 @@ std::string musec( void ){
   strstream >> mus;
   return mus;}
 
-vuc my_hash(vuc mem) {
+vuc         my_hash(vuc mem) {
   unsigned char ha[20];
   SHA1(&mem[0], mem.size(), ha);
   std::string myha = reinterpret_cast<const char*>(ha);
@@ -153,22 +153,22 @@ vuc my_hash(vuc mem) {
   //print_chars_v(vmyha);
   return vmyha;}
 
-void setup_dirs(){
+void        setup_dirs(){
   my_mkdir("/tmp/cell/");
   my_system("rm /tmp/cell/cell_*");
   my_mkdir("/tmp/cell/reproduce");
   // seed new directory with at least one reproducing program
   my_system("cp /home/au/dev/selfprog/cell /tmp/cell/reproduce/");
-  my_system("cp /home/au/dev/selfprog/input /tmp/cell/");
-  my_system("cp /home/au/dev/selfprog/expect /tmp/cell/");
+  my_system("cp /home/au/dev/selfprog/input_111 /tmp/cell/input");
+  my_system("cp /home/au/dev/selfprog/expect_111 /tmp/cell/expect");
   my_mkdir("/tmp/cell/backup");}
-void define_sample_input(){
+void        define_sample_input(){
   FILE * input;
   input = fopen ("/tmp/cell/input", "w");
   std::string strin ("111");
   fwrite (&(strin.c_str())[0] , sizeof(char), strin.size(), input);
   fclose (input);}
-char* read_output(){
+char*       read_output(){
   std::streampos size;
   char * memblock;
 
@@ -180,7 +180,23 @@ char* read_output(){
       file.seekg (0, std::ios::beg);
       file.read (memblock, size);
       file.close();
+      DEBUG && std::cout << "the entire file content is in memory" << std::endl;
+      return memblock;
+      delete[] memblock;
+    }
+  return new char [0];};
+char*       read_expect(){
+  std::streampos size;
+  char * memblock;
 
+  std::ifstream file ("/tmp/cell/expect", std::ios::in|std::ios::binary|std::ios::ate);
+  if (file.is_open())
+    {
+      size = file.tellg();
+      memblock = new char [size];
+      file.seekg (0, std::ios::beg);
+      file.read (memblock, size);
+      file.close();
       DEBUG && std::cout << "the entire file content is in memory" << std::endl;
       return memblock;
       delete[] memblock;
@@ -191,19 +207,19 @@ std::string find_random_starting_cell(){
   glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
   return random_file;}
-FILE* set_starting_file(std::string random_file){
+FILE*       set_starting_file(std::string random_file){
   FILE * file;
   //random_file = "/home/au/dev/selfprog/cell"; // override cell name with known good one
   std::cout << ".. starting gene: " << random_file << std::endl;
   file = fopen ( random_file.c_str(), "rb" );
   if (file==NULL) {fputs ("File error", stderr); exit (1);}
   return file;}
-long find_filesize(FILE* file){
+long        find_filesize(FILE* file){
   fseek (file , 0 , SEEK_END);
   long fsize = ftell (file);
   rewind (file);
   return fsize;}
-void initialize_random(){
+void        initialize_random(){
   int stime = time(NULL);
   std::cout << "random seed: " << stime << std::endl;
   srand(stime);
@@ -242,7 +258,7 @@ param_struct parse_params( int argc, char* argv[]){
   }
   DEBUG && std::cout << "Niterations = " << fill.Niterations << std::endl;
   return fill;}
-void print_status(status_struct mystatus){
+void        print_status(status_struct mystatus){
   // delete previous output line:
   std::cout << "\r                                                                 \r";
   std::cout << "N: " << mystatus.N; //<< " P: " << mystatus.poolsize;
@@ -270,9 +286,12 @@ int main(int argc, char* argv[]) {
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
   sleep(1);
 
+
+  // write input file dynamically to test intelligent answer
   // TODO: replace with system to choose from set of patterns
   //       with defined optimal outputs
-  // define_sample_input();   //  define input to learn intelligent answers
+  // define_sample_input();
+
 
   /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
@@ -347,6 +366,7 @@ int main(int argc, char* argv[]) {
       }    }
     DEBUG && std::cout << "finished changes" << std::endl;
 
+
     /********************  compare to old genes   ********************/
     vuc vmyha = my_hash(loc_memblock);    // get hash of gene = vuc
 
@@ -370,6 +390,7 @@ int main(int argc, char* argv[]) {
     //std::cout << "pool: " << genepool.size() << ", ";
     now.poolsize = genepool.size();
 
+
     /********************  write new cell         ********************/
     // write memblock to new file, byte-wise
     std::string filename ("/tmp/cell/cell_");
@@ -381,6 +402,7 @@ int main(int argc, char* argv[]) {
     fclose (outfile);
     // make file executable
     chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+
 
     /********************  execute with sample input text ********************/
     std::string erroutput = "";
@@ -395,6 +417,7 @@ int main(int argc, char* argv[]) {
       continue;
     }
 
+
     /********************  sorting out non-reproductive cells ********************/
     /*         od -An -tx1 singles/$nextfile > progcell */
     FILE * progcell;
@@ -404,6 +427,7 @@ int main(int argc, char* argv[]) {
       fprintf(progcell, " %02hhx", loc_memblock[k]);
     }
     fclose (progcell);
+
 
     /******************** check re-compilation of self ********************/
     my_system(filename + " < /tmp/cell/progcell > /tmp/cell/outcell");
@@ -434,7 +458,8 @@ int main(int argc, char* argv[]) {
 
       // check how well it performed on sample input
       char* out = read_output();
-      std::cout << " .. output of program run on /tmp/cell/input: " << out << std::endl;
+      char* exp = read_expect();
+      std::cout << " .. output vs expectation: " << out << " " << exp << std::endl;
 
     } else {
       print_status(now);
