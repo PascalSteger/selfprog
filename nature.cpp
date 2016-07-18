@@ -23,7 +23,7 @@
 #include <sys/wait.h>    /* sleep() */
 #include <glob.h>        /* for glob (find file matching pattern) */
 #include <random>        /* for poisson distribution */
-
+#include <math.h>          /* math.sqrt */
 #include "paths.hpp"
 #include "tests.hpp"
 #include "intelligence.hpp"
@@ -155,10 +155,12 @@ vuc         my_hash(vuc mem) {
 
 void        setup_dirs(){
   my_mkdir("/tmp/cell/");
-  my_system("rm /tmp/cell/cell_*");
   my_mkdir("/tmp/cell/reproduce");
+  // clean directory to contain no previous files
+  my_system("rm /tmp/cell/cell_*");
   // seed new directory with at least one reproducing program
   my_system("cp /home/au/dev/selfprog/cell /tmp/cell/reproduce/");
+  // TODO copy meaningful files input_111 and output, after debugging
   my_system("cp /home/au/dev/selfprog/input_111 /tmp/cell/input");
   my_system("cp /home/au/dev/selfprog/expect_111 /tmp/cell/expect");
   my_mkdir("/tmp/cell/backup");}
@@ -201,8 +203,7 @@ char*       read_expect(){
       delete[] memblock;
     }
   return new char [0];};
-char *chartobin ( unsigned char c )
-{
+char *chartobin ( unsigned char c ){
   static char bin[CHAR_BIT + 1] = {0};
   int         i;
 
@@ -212,8 +213,7 @@ char *chartobin ( unsigned char c )
       c /= 2;
     }
 
-  return bin;
-}
+  return bin;}
 std::string find_random_starting_cell(){
   glob_t glob_result;
   glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
@@ -235,7 +235,9 @@ void        initialize_random(){
   std::cout << "random seed: " << stime << std::endl;
   srand(stime);
   // debug option: initialize to always the same random number
-  //srand (1900); // for DEBUGGING. if whole progam is working, use srand(time(NULL)) to get a new starting point with each call to nature.exe
+  if(DEBUG) {
+      srand(1900); // for DEBUGGING. if whole progam is working, use srand(time(NULL)) to get a new starting point with each call to nature.exe
+    }
   return;}
 param_struct parse_params( int argc, char* argv[]){
   param_struct fill;
@@ -405,6 +407,7 @@ int main(int argc, char* argv[]) {
     // write memblock to new file, byte-wise
     std::string filename ("/tmp/cell/cell_");
     filename = filename + my_timestamp() + musec();
+    std::string filename_cp = filename;
     DEBUG && std::cout << "filename with timestamp = " << filename << std::endl;
     FILE * outfile;
     outfile = fopen (filename.c_str(), "wb");
@@ -416,13 +419,13 @@ int main(int argc, char* argv[]) {
 
     /********************  execute with sample input text ********************/
     std::string erroutput = "";
-    erroutput = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output &> /dev/null; echo $?");
+    erroutput = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output; echo $?");
 
     std::cout << "erroutput: " << std::atoi(erroutput.c_str()) << " ";
     if(std::atoi(erroutput.c_str()) == 124){
-      //TODO: store in status std::cout << "##### program took too long, aborting ####\r" << std::flush;
+      // TODO: store in status
+      // std::cout << "##### program took too long, aborting ####\r" << std::flush;
       remove(filename.c_str());
-      remove("/tmp/cell/outcell");
       print_status(now);
       continue;
     }
@@ -489,7 +492,7 @@ int main(int argc, char* argv[]) {
       std::fread(&foutmem[0], sizeof(unsigned char), foutmem.size(), fout);
       fclose(fout);
 
-      std::cout << std::endl << " output: " << std::endl;
+      std::cout << std::endl << " output is of size " << foutsize << std::endl;
       print_chars_v(foutmem);
 
       std::string fnexp = "/tmp/cell/expect";
@@ -499,15 +502,35 @@ int main(int argc, char* argv[]) {
       std::fread(&fexpmem[0], sizeof(unsigned char), fexpmem.size(), fexp);
       fclose(fexp);
 
-      std::cout << std::endl << " expect: " << std::endl;
+      std::cout << std::endl << " expect is of size " << fexpsize << std::endl;
       print_chars_v(fexpmem);
+      std::cout << std::endl;
 
+      // calculate similarity as squared differences
+      unsigned int len_max = std::max(foutsize, fexpsize);
+      foutmem.resize(len_max);
+      fexpmem.resize(len_max);
+      double top=0.0;
+      double suma=0.0;
+      double sumb=0.0;
+      for(unsigned int cl=0; cl<len_max; ++cl){
+        top += foutmem[cl]*fexpmem[cl];
+        suma += foutmem[cl]*foutmem[cl];
+        sumb += fexpmem[cl]*fexpmem[cl];
+      }
+      double cosphi = top/(std::sqrt(suma)*std::sqrt(sumb));
+      std::cout << "  similarity: " << cosphi << std::endl;
+
+      // TODO store similarity = fitness output alongside the output, e.g. in its name
+      filename_cp += "_" + std::to_string(cosphi);
+      my_system("mv " + filename + " " + filename_cp);
     } else {
       print_status(now);
     }
 
     remove(filename.c_str());
     remove("/tmp/cell/outcell");
+    remove("/tmp/cell/output");
   }
   if(has_not_reproduced){  // after N iterations
     // remove uncooperative cell
