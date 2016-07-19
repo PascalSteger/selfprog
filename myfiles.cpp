@@ -1,5 +1,8 @@
 #include <iostream>   /* streampos */
 #include <fstream>    /* ifstream */
+#include <string>     /* std::string */
+#include <glob.h>     /* for glob (find file matching pattern) */
+#include <random>
 
 #include "debug.hpp"
 
@@ -50,3 +53,9 @@ long  find_filesize(FILE* file){
   long fsize = ftell (file);
   rewind (file);
   return fsize;}
+
+std::string find_random_starting_cell( void ){
+  glob_t glob_result;
+  glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
+  std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
+  return random_file;}

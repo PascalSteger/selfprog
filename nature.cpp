@@ -65,11 +65,6 @@ char *chartobin ( unsigned char c ){
     }
 
   return bin;}
-std::string find_random_starting_cell(){
-  glob_t glob_result;
-  glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
-  std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
-  return random_file;}
 param_struct parse_params( int argc, char* argv[]){
   param_struct fill;
   fill.Niterations = 1000;
