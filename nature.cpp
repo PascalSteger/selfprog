@@ -32,6 +32,7 @@
 #include "similarity.hpp"     /* calc_similarity */
 #include "mysystem.hpp"
 #include "debug.hpp"
+#include "myfiles.hpp"
 
 void        print_chars(char* mem, int siz){
   // print char values one by one, in hex representation
@@ -95,39 +96,6 @@ void        define_sample_input(){
   std::string strin ("111");
   fwrite (&(strin.c_str())[0] , sizeof(char), strin.size(), input);
   fclose (input);}
-char*       read_output(){
-  std::streampos size;
-  char * memblock;
-  std::ifstream file ("/tmp/cell/output", std::ios::in|std::ios::binary|std::ios::ate);
-  if (file.is_open())
-    {
-      size = file.tellg();
-      memblock = new char [size];
-      file.seekg (0, std::ios::beg);
-      file.read (memblock, size);
-      file.close();
-      DEBUG && std::cout << "the entire file content is in memory: " << memblock << std::endl;
-      return memblock;
-      delete[] memblock;
-    }
-  return new char [0];};
-char*       read_expect(){
-  std::streampos size;
-  char * memblock;
-
-  std::ifstream file ("/tmp/cell/expect", std::ios::in|std::ios::binary|std::ios::ate);
-  if (file.is_open())
-    {
-      size = file.tellg();
-      memblock = new char [size];
-      file.seekg (0, std::ios::beg);
-      file.read (memblock, size);
-      file.close();
-      DEBUG && std::cout << "the entire file content is in memory" << std::endl;
-      return memblock;
-      delete[] memblock;
-    }
-  return new char [0];};
 char *chartobin ( unsigned char c ){
   static char bin[CHAR_BIT + 1] = {0};
   int         i;
@@ -144,18 +112,7 @@ std::string find_random_starting_cell(){
   glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
   return random_file;}
-FILE*       open_file(std::string random_file){
-  FILE * file;
-  //random_file = "/home/au/dev/selfprog/cell"; // override cell name with known good one
-  file = fopen ( random_file.c_str(), "rb" );
-  if (file==NULL) {fputs ("File error", stderr); exit (1);}
-  return file;}
-long        find_filesize(FILE* file){
-  fseek (file , 0 , SEEK_END);
-  long fsize = ftell (file);
-  rewind (file);
-  return fsize;}
-void        initialize_random(){
+void  initialize_random(){
   int stime = time(NULL);
   std::cout << "random seed: " << stime << std::endl;
   srand(stime);
