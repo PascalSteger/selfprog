@@ -1,31 +1,16 @@
 // nature.cpp: program to emulate evolution of digital life
 // aim: produce super intelligence through natural selection
 
-#include <stdio.h>
 #include <iostream>      /* cin, cout */
-#include <fstream>       /* ifstream, ofstream */
-#include <stdlib.h>      /* exit, EXIT_FAILURE, srand, rand */
 #include <limits.h>      /* UCHAR_MAX, char_to_bin */
-#include <sys/types.h>   /* pid_t */
-#include <sys/stat.h>
-// #include <openssl/sha.h> /* SHA-1 */
-#include <functional>    /* hash */
-#include <string.h>
-#include <sstream>       /* stringstream, for conversion long unsigned => string */
 #include <sys/stat.h>    /* chmod */
 #include <map>           /* std::multimap */
-#include <openssl/sha.h> /* SHA1 */
 #include <unistd.h>
-/*#include <signal.h>      // kill_child */
-#include <sys/wait.h>    /* sleep() */
-#include <glob.h>        /* for glob (find file matching pattern) */
 #include <random>        /* for poisson distribution */
-#include <math.h>          /* math.sqrt */
 
 #include "paths.hpp"
 #include "tests.hpp"
 #include "intelligence.hpp"
-// #include "timestamp.hpp"
 #include "datastructures.hpp" /* typedefs, vuc*/
 #include "similarity.hpp"     /* calc_similarity */
 #include "mysystem.hpp"
@@ -37,17 +22,6 @@
 #include "myparams.hpp"
 #include "md5.hpp"
 
-char *chartobin ( unsigned char c ){
-  static char bin[CHAR_BIT + 1] = {0};
-  int         i;
-
-  for ( i = CHAR_BIT - 1; i >= 0; i-- )
-    {
-      bin[i] = (c % 2) + '0';
-      c /= 2;
-    }
-
-  return bin;}
 int main(int argc, char* argv[]) {
   param_struct params = parse_params(argc, argv);
   status_struct now;
