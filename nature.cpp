@@ -5,7 +5,6 @@
 #include <iostream>      /* cin, cout */
 #include <fstream>       /* ifstream, ofstream */
 #include <stdlib.h>      /* exit, EXIT_FAILURE, srand, rand */
-#include <sys/time.h>    /* gettimeofday */
 #include <limits.h>      /* UCHAR_MAX, char_to_bin */
 #include <sys/types.h>   /* pid_t */
 #include <sys/stat.h>
@@ -34,19 +33,9 @@
 #include "myfiles.hpp"
 #include "myrandom.hpp"
 #include "myoutput.hpp"
+#include "timestamp.hpp"
 
-
-std::string musec( void ){
-  timeval tv;
-  gettimeofday(&tv, NULL);
-  // tv.tv_usec is long unsigned int
-  std::string mus;
-  std::stringstream strstream;
-  strstream << tv.tv_usec;
-  strstream >> mus;
-  return mus;}
-
-vuc         my_hash(vuc mem) {
+vuc my_hash(vuc mem) {
   unsigned char ha[20];
   SHA1(&mem[0], mem.size(), ha);
   std::string myha = reinterpret_cast<const char*>(ha);

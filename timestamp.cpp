@@ -1,7 +1,10 @@
-# include <stdlib.h>
-# include <stdio.h>
-# include <time.h>
-# include "timestamp.hpp"
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/time.h>    /* gettimeofday */
+#include <string>
+#include <sstream>       /* stringstream, for conversion long unsigned => string */
+#include "timestamp.hpp"
 
 double cpu_time ( )
 /******************************************************************************/
@@ -104,3 +107,13 @@ char* timestring( void )
   return s;
 # undef TIME_SIZE
 }
+
+std::string musec( void ){
+  timeval tv;
+  gettimeofday(&tv, NULL);
+  // tv.tv_usec is long unsigned int
+  std::string mus;
+  std::stringstream strstream;
+  strstream << tv.tv_usec;
+  strstream >> mus;
+  return mus;}
