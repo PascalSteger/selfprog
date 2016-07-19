@@ -18,8 +18,11 @@ similarity: similarity.cpp similarity.hpp datastructures.hpp
 mysystem: mysystem.cpp timestamp.o mysystem.hpp timestamp.hpp datastructures.hpp
 	g++ $(CXXFLAGS) -c mysystem.cpp
 
-nature: nature.cpp timestamp.o intelligence.o similarity.o mysystem.o datastructures.hpp debug.hpp
-	g++ $(CXXFLAGS) nature.cpp timestamp.o intelligence.o similarity.o mysystem.o -lssl -lcrypto -o nature
+tests: tests.cpp tests.hpp mysystem.hpp
+	g++ $(CXXFLAGS) -c tests.cpp
+
+nature: nature.cpp tests timestamp.o intelligence.o similarity mysystem datastructures.hpp debug.hpp
+	g++ $(CXXFLAGS) nature.cpp timestamp.o intelligence.o similarity.o mysystem.o tests.o -lssl -lcrypto -o nature
 
 clean:
 	rm -f *.o *.exe
