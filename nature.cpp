@@ -5,7 +5,6 @@
 #include <iostream>      /* cin, cout */
 #include <fstream>       /* ifstream, ofstream */
 #include <stdlib.h>      /* exit, EXIT_FAILURE, srand, rand */
-#include <time.h>        /* time */
 #include <sys/time.h>    /* gettimeofday */
 #include <limits.h>      /* UCHAR_MAX, char_to_bin */
 #include <sys/types.h>   /* pid_t */
@@ -33,6 +32,7 @@
 #include "mysystem.hpp"
 #include "debug.hpp"
 #include "myfiles.hpp"
+#include "myrandom.hpp"
 
 void        print_chars(char* mem, int siz){
   // print char values one by one, in hex representation
@@ -112,15 +112,6 @@ std::string find_random_starting_cell(){
   glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
   return random_file;}
-void  initialize_random(){
-  int stime = time(NULL);
-  std::cout << "random seed: " << stime << std::endl;
-  srand(stime);
-  // debug option: initialize to always the same random number
-  if(DEBUG) {
-      srand(1900); // for DEBUGGING. if whole progam is working, use srand(time(NULL)) to get a new starting point with each call to nature.exe
-    }
-  return;}
 param_struct parse_params( int argc, char* argv[]){
   param_struct fill;
   fill.Niterations = 1000;
