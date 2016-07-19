@@ -27,8 +27,11 @@ myfiles: myfiles.cpp myfiles.hpp
 myrandom: myrandom.cpp myrandom.hpp
 	g++ $(CXXFLAGS) -c myrandom.cpp
 
-nature: nature.cpp tests timestamp intelligence similarity mysystem myfiles myrandom datastructures.hpp debug.hpp
-	g++ $(CXXFLAGS) nature.cpp timestamp.o intelligence.o similarity.o mysystem.o tests.o myfiles.o myrandom.o -lssl -lcrypto -o nature
+myoutput: myoutput.cpp myoutput.hpp
+	g++ $(CXXFLAGS) -c myoutput.cpp
+
+nature: nature.cpp tests.o timestamp.o intelligence.o similarity.o mysystem.o myfiles.o myrandom.o myoutput.o datastructures.hpp debug.hpp
+	g++ $(CXXFLAGS) nature.cpp timestamp.o intelligence.o similarity.o mysystem.o tests.o myfiles.o myrandom.o myoutput.o -lssl -lcrypto -o nature
 
 clean:
 	rm -f *.o *.exe
