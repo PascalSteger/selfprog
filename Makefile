@@ -33,8 +33,11 @@ myoutput: myoutput.cpp myoutput.hpp
 paths: paths.cpp paths.hpp
 	g++ $(CXXFLAGS) -c paths.cpp
 
-nature: nature.cpp tests.o timestamp.o intelligence.o similarity.o mysystem.o myfiles.o myrandom.o myoutput.o paths.o datastructures.hpp debug.hpp
-	g++ $(CXXFLAGS) nature.cpp paths.o timestamp.o intelligence.o similarity.o mysystem.o tests.o myfiles.o myrandom.o myoutput.o -lssl -lcrypto -o nature
+myparams: myparams.cpp myparams.hpp
+	g++ $(CXXFLAGS) -c myparams.cpp
+
+nature: nature.cpp tests.o timestamp.o intelligence.o similarity.o mysystem.o myfiles.o myrandom.o myoutput.o paths.o myparams.o datastructures.hpp debug.hpp
+	g++ $(CXXFLAGS) nature.cpp paths.o timestamp.o intelligence.o similarity.o mysystem.o tests.o myfiles.o myrandom.o myoutput.o myparams.o -lssl -lcrypto -o nature
 
 clean:
 	rm -f *.o *.exe
