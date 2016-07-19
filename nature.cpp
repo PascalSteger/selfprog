@@ -5,7 +5,6 @@
 #include <iostream>      /* cin, cout */
 #include <fstream>       /* ifstream */
 #include <stdlib.h>      /* exit, EXIT_FAILURE, srand, rand */
-#include <pstream.h>     /* redi */
 #include <time.h>        /* time */
 #include <sys/time.h>    /* gettimeofday */
 #include <limits.h>      /* UCHAR_MAX, char_to_bin */
@@ -24,22 +23,15 @@
 #include <glob.h>        /* for glob (find file matching pattern) */
 #include <random>        /* for poisson distribution */
 #include <math.h>          /* math.sqrt */
+
 #include "paths.hpp"
 #include "tests.hpp"
 #include "intelligence.hpp"
-#include "timestamp.hpp"
-
-struct param_struct {
-  unsigned Niterations;
-  float pois_cycles;};
-struct status_struct {
-  unsigned N;
-  unsigned poolsize;
-  unsigned nu = 0;
-};
-
-typedef std::vector<unsigned char> vuc;
-bool DEBUG = false;
+// #include "timestamp.hpp"
+#include "datastructures.hpp" /* typedefs, vuc*/
+#include "similarity.hpp"     /* calc_similarity */
+#include "mysystem.hpp"
+#include "debug.hpp"
 
 void        print_chars(char* mem, int siz){
   // print char values one by one, in hex representation
@@ -60,33 +52,6 @@ void        print_chars_v(vuc mem){
     }
   }
   std::cout << std::endl;}
-
-int         my_mkdir(std::string dirname) {
-  struct stat st = {0};
-  if (stat(dirname.c_str(), &st) == -1) {
-    mkdir(dirname.c_str(), 0700);
-  }
-  return 0;}
-
-std::string my_timestamp( void ) {
-  char * s;
-  s = timestring();
-  std::string ss(s);
-  DEBUG && std::cout << "my_timestamp: ss = " << ss <<std::endl;
-  return ss;}
-
-std::string my_system( std::string command) {
-  //std::cout << "         my_system:  " << command << std::endl;
-  // run a process and create a streambuf that reads its stdout and stderr
-  redi::ipstream proc(command, redi::pstreams::pstderr|redi::pstreams::pstdout);
-  std::string line;
-  // read child's stderr and stdout
-  std::string str ("");
-  while (proc >> line){
-    //std::cout << "output: " << line << std::endl;
-    str += line + "\n";
-  }
-  return str;}
 
 static void show_usage( std::string name ) {
     std::cerr << "Usage: " << name << " <option(s)>"
@@ -469,22 +434,7 @@ int main(int argc, char* argv[]) {
       fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
       chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);       // make file executable
 
-      // TODO: check how well it performed on sample input
-      // try 1: determine number of differing bytes via char reading
-      // char * out = read_output();
-      // char * expect = read_expect();
-      // unsigned int len_out = sizeof(out)/sizeof(*out);
-      // unsigned int len_expect = sizeof(expect)/sizeof(*expect);
-      // unsigned int len_max = std::max(len_out, len_expect);
-      // std::vector<char> v_out(out, out + len_out);
-      // std::vector<char> v_exp(expect, expect + len_expect);
-      // v_out.resize(len_max);
-      // v_exp.resize(len_max);
-      // std::string s_out(v_out.begin(), v_out.end());
-      // std::string s_exp(v_exp.begin(), v_exp.end());
-      // std::cout << s_out << " " << s_exp << std::endl;
-
-      // try 2: use existing framework for od-like reading
+      // determine how well output performs on training samples
       std::string fnout = "/tmp/cell/output";
       FILE * fout = open_file(fnout);
       long foutsize = find_filesize(fout);
@@ -506,19 +456,7 @@ int main(int argc, char* argv[]) {
       print_chars_v(fexpmem);
       std::cout << std::endl;
 
-      // calculate similarity as squared differences
-      unsigned int len_max = std::max(foutsize, fexpsize);
-      foutmem.resize(len_max);
-      fexpmem.resize(len_max);
-      double top=0.0;
-      double suma=0.0;
-      double sumb=0.0;
-      for(unsigned int cl=0; cl<len_max; ++cl){
-        top += foutmem[cl]*fexpmem[cl];
-        suma += foutmem[cl]*foutmem[cl];
-        sumb += fexpmem[cl]*fexpmem[cl];
-      }
-      double cosphi = top/(std::sqrt(suma)*std::sqrt(sumb));
+      double cosphi = calc_similarity(foutmem, foutsize, fexpmem, fexpsize);
       std::cout << "  similarity: " << cosphi << std::endl;
 
       // TODO store similarity = fitness output alongside the output, e.g. in its name
