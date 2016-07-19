@@ -4,10 +4,11 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
+#include <string>
 #include <openssl/md5.h>
+#include <openssl/sha.h>   /* SHA-1 */
 
+#include "datastructures.hpp"
 
 unsigned char result[MD5_DIGEST_LENGTH];
 
@@ -44,3 +45,11 @@ unsigned char* calc_md5(char* filename) {
 
     return result;
 }
+
+vuc my_hash(vuc mem) {
+  unsigned char ha[20];
+  SHA1(&mem[0], mem.size(), ha);
+  std::string myha = reinterpret_cast<const char*>(ha);
+  std::vector<unsigned char> vmyha (myha.begin(), myha.end());
+  //print_chars_v(vmyha);
+  return vmyha;}

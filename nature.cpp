@@ -8,7 +8,7 @@
 #include <limits.h>      /* UCHAR_MAX, char_to_bin */
 #include <sys/types.h>   /* pid_t */
 #include <sys/stat.h>
-#include <openssl/sha.h> /* SHA-1 */
+// #include <openssl/sha.h> /* SHA-1 */
 #include <functional>    /* hash */
 #include <string.h>
 #include <sstream>       /* stringstream, for conversion long unsigned => string */
@@ -35,14 +35,7 @@
 #include "myoutput.hpp"
 #include "timestamp.hpp"
 #include "myparams.hpp"
-
-vuc my_hash(vuc mem) {
-  unsigned char ha[20];
-  SHA1(&mem[0], mem.size(), ha);
-  std::string myha = reinterpret_cast<const char*>(ha);
-  std::vector<unsigned char> vmyha (myha.begin(), myha.end());
-  //print_chars_v(vmyha);
-  return vmyha;}
+#include "md5.hpp"
 
 char *chartobin ( unsigned char c ){
   static char bin[CHAR_BIT + 1] = {0};
