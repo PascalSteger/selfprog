@@ -3,8 +3,8 @@
 
 #include <iostream>      /* cin, cout */
 #include <limits.h>      /* UCHAR_MAX, char_to_bin */
-#include <sys/stat.h>    /* chmod */
 #include <map>           /* std::multimap */
+#include <sys/stat.h>    /* S_IRUSR, S_IWUSR, S_IXUSR*/
 #include <unistd.h>
 #include <random>        /* for rand() */
 #include <assert.h>
@@ -210,12 +210,7 @@ int main(int argc, char* argv[]) {
       now.nu++;
       print_status(now);
 
-      // store cell in reproduce set
-      FILE * progcell;
-      std::string fn_working = PATH_REPRODUCE + "cell_" + my_timestamp() + musec();
-      progcell = fopen(fn_working.c_str(), "wb");
-      fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
-      chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);       // make file executable
+      store_cell_in_reproduce_set(loc_memblock);
 
       // determine how well output performs on training samples
       std::string fnout = PATH_CELL + "output";

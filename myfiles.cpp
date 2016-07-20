@@ -3,9 +3,13 @@
 #include <string>     /* std::string */
 #include <glob.h>     /* for glob (find file matching pattern) */
 #include <random>
+#include <sys/stat.h>    /* chmod */
 
 #include "debug.hpp"
 #include "paths.hpp"
+#include "datastructures.hpp"
+#include "mysystem.hpp"
+#include "timestamp.hpp"
 
 char* read_output(){
   std::streampos size;
@@ -61,3 +65,12 @@ std::string find_random_starting_cell( void ){
   glob("/tmp/cell/reproduce/cell*", GLOB_TILDE, NULL, &glob_result );
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
   return random_file;}
+
+bool store_cell_in_reproduce_set(vuc loc_memblock){
+  FILE * progcell;
+  std::string fn_working = PATH_REPRODUCE + "cell_" + my_timestamp() + musec();
+  progcell = fopen(fn_working.c_str(), "wb");
+  fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
+  // make file executable
+  chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+}
