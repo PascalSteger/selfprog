@@ -3,7 +3,7 @@
 
 #include <string>
 
-const bool DEBUG = true;
+const bool DEBUG = false;
 
 bool print_debug( std::string output );
 

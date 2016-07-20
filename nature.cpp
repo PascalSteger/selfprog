@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
       //  2:    delete byte from random position
       int option = rand()%3;
       if(option == 0){
-        DEBUG && std::cout << "delete random byte" << std::endl;
+        print_debug( "delete random byte" );
         if(loc_memblock.size() == 1){
           std::cerr << "Too short program: cannot delete byte" << std::endl;
           continue;
@@ -107,13 +107,13 @@ int main(int argc, char* argv[]) {
         loc_memblock.erase( loc_memblock.begin()+pos_del);
         //print_chars(loc_memblock, fsize);
       } else if (option == 1) {
-        DEBUG && std::cout << "add random byte at random position" << std::endl;
+        print_debug( "add random byte at random position" );
         unsigned pos_add = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
         DEBUG && printf("add byte %02hhx at position %d\n", val, pos_add);
         loc_memblock.insert( loc_memblock.begin()+pos_add, val);
       } else if (option == 2) {
-        DEBUG && std::cout << "change random byte" << std::endl;
+        print_debug( "change random byte" );
         unsigned pos_change = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
         DEBUG && printf("change byte at position %d to %02hhx\n", pos_change, val);
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "option must be one of 1,2,3, got " << option << std::endl;
         exit(1);
       }    }
-    DEBUG && std::cout << "finished changes" << std::endl;
+    print_debug( "finished changes" );
 
 
     /********************  compare to old genes   ********************/
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     vuc outblock(outfsize);
     std::fread(&outblock[0], sizeof(unsigned char), outblock.size(), compfile);
     fclose(compfile);
-    DEBUG && std::cout << "the cell output content is in memory" << std::endl;
+    print_debug( "the cell output content is in memory" );
 
     if(outblock == loc_memblock){
       has_not_reproduced = false;
