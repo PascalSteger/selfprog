@@ -7,6 +7,7 @@
 #include <map>           /* std::multimap */
 #include <unistd.h>
 #include <random>        /* for poisson distribution */
+#include <assert.h>
 
 #include "paths.hpp"
 #include "tests.hpp"
@@ -37,6 +38,7 @@ int main(int argc, char* argv[]) {
   std::cout << ".. starting gene: " << random_file << std::endl;
   FILE * file = open_file(random_file);
   long fsize = find_filesize(file);
+  assert(fsize>0);
   vuc memblock(fsize);
   std::fread(&memblock[0], sizeof(unsigned char), memblock.size(), file);
   fclose(file);
@@ -89,6 +91,7 @@ int main(int argc, char* argv[]) {
     DEBUG && std::cout << "cycles = " << cycles << std::endl;
 
     vuc loc_memblock = memblock;
+    assert(loc_memblock.size() > 0);
     for(unsigned int j=1; j <= cycles; j++){
       // choose of three options:
       //  0: add random byte at random position,
@@ -151,7 +154,7 @@ int main(int argc, char* argv[]) {
 
     /********************  write new cell         ********************/
     // write memblock to new file, byte-wise
-    std::string filename ("/tmp/cell/cell_");
+    std::string filename (PATH_CELL+"cell_");
     filename = filename + my_timestamp() + musec();
     std::string filename_cp = filename;
     DEBUG && std::cout << "filename with timestamp = " << filename << std::endl;
@@ -165,7 +168,8 @@ int main(int argc, char* argv[]) {
 
     /********************  execute with sample input text ********************/
     std::string erroutput = "";
-    erroutput = my_system("timeout 1s " + filename + " < /tmp/cell/input > /tmp/cell/output; echo $?");
+    erroutput = my_system("timeout 1s " + filename + " < "
+                          + PATH_CELL+"input > "+ PATH_CELL + "output; echo $?");
 
     std::cout << "erroutput: " << std::atoi(erroutput.c_str()) << " ";
     if(std::atoi(erroutput.c_str()) == 124){
@@ -180,7 +184,7 @@ int main(int argc, char* argv[]) {
     /********************  sorting out non-reproductive cells ********************/
     /*         od -An -tx1 singles/$nextfile > progcell */
     FILE * progcell;
-    progcell = fopen ("/tmp/cell/progcell", "wb");
+    progcell = fopen ((PATH_CELL+"progcell").c_str(), "wb");
     // get char values one by one, in hex representation
     for(unsigned int k=0; k<loc_memblock.size(); k++){
       fprintf(progcell, " %02hhx", loc_memblock[k]);
@@ -189,11 +193,11 @@ int main(int argc, char* argv[]) {
 
 
     /******************** check re-compilation of self ********************/
-    my_system(filename + " < /tmp/cell/progcell > /tmp/cell/outcell");
+    my_system(filename + " < "+PATH_CELL+"progcell > "+PATH_CELL+"outcell");
     // in output of cell run on itself
     FILE * compfile;
     long outfsize = 0;
-    compfile = fopen ( "/tmp/cell/outcell" , "rb" );
+    compfile = fopen ( (PATH_CELL+"outcell").c_str() , "rb" );
     if (compfile==NULL) {fputs ("File error\n", stderr); exit (1);}
     fseek (compfile , 0 , SEEK_END);
     outfsize = ftell (compfile);
@@ -210,13 +214,13 @@ int main(int argc, char* argv[]) {
 
       // store cell in reproduce set
       FILE * progcell;
-      std::string fn_working = "/tmp/cell/reproduce/cell_" + my_timestamp() + musec();
+      std::string fn_working = PATH_REPRODUCE + "cell_" + my_timestamp() + musec();
       progcell = fopen(fn_working.c_str(), "wb");
       fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
       chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);       // make file executable
 
       // determine how well output performs on training samples
-      std::string fnout = "/tmp/cell/output";
+      std::string fnout = PATH_CELL + "output";
       FILE * fout = open_file(fnout);
       long foutsize = find_filesize(fout);
       vuc foutmem(foutsize);
@@ -226,7 +230,7 @@ int main(int argc, char* argv[]) {
       std::cout << std::endl << " output is of size " << foutsize << std::endl;
       print_chars_v(foutmem);
 
-      std::string fnexp = "/tmp/cell/expect";
+      std::string fnexp = PATH_CELL + "expect";
       FILE * fexp = open_file(fnexp);
       long fexpsize = find_filesize(fexp);
       vuc fexpmem(fexpsize);
@@ -248,8 +252,8 @@ int main(int argc, char* argv[]) {
     }
 
     remove(filename.c_str());
-    remove("/tmp/cell/outcell");
-    remove("/tmp/cell/output");
+    remove((PATH_CELL + "outcell").c_str());
+    remove((PATH_CELL + "output").c_str());
   }
   if(has_not_reproduced){  // after N iterations
     // remove uncooperative cell

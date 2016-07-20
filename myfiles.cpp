@@ -5,11 +5,13 @@
 #include <random>
 
 #include "debug.hpp"
+#include "paths.hpp"
 
 char* read_output(){
   std::streampos size;
   char * memblock;
-  std::ifstream file ("/tmp/cell/output", std::ios::in|std::ios::binary|std::ios::ate);
+  std::ifstream file ((PATH_CELL+"output").c_str(),
+                      std::ios::in|std::ios::binary|std::ios::ate);
   if (file.is_open())
     {
       size = file.tellg();
@@ -27,7 +29,7 @@ char* read_expect(){
   std::streampos size;
   char * memblock;
 
-  std::ifstream file ("/tmp/cell/expect", std::ios::in|std::ios::binary|std::ios::ate);
+  std::ifstream file (PATH_CELL+"expect", std::ios::in|std::ios::binary|std::ios::ate);
   if (file.is_open())
     {
       size = file.tellg();
@@ -56,6 +58,6 @@ long  find_filesize(FILE* file){
 
 std::string find_random_starting_cell( void ){
   glob_t glob_result;
-  glob("/tmp/cell/reproduce/*",GLOB_TILDE,NULL,&glob_result);
+  glob("/tmp/cell/reproduce/cell*", GLOB_TILDE, NULL, &glob_result );
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
   return random_file;}
