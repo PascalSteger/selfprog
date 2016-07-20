@@ -6,7 +6,7 @@
 #include <sys/stat.h>    /* chmod */
 #include <map>           /* std::multimap */
 #include <unistd.h>
-#include <random>        /* for poisson distribution */
+#include <random>        /* for rand() */
 #include <assert.h>
 
 #include "paths.hpp"
@@ -29,8 +29,6 @@ int main(int argc, char* argv[]) {
 
   // set random generator and Poisson distribution characteristics for count of # changes
   initialize_random();
-  std::default_random_engine generator;
-  std::poisson_distribution<int> distribution(params.pois_cycles);
 
   setup_dirs();
   std::string random_file = find_random_starting_cell(); // find random file from directory with reproducing cells
@@ -46,12 +44,10 @@ int main(int argc, char* argv[]) {
   DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
   sleep(1);
 
-
   // write input file dynamically to test intelligent answer
   // TODO: replace with system to choose from set of patterns
   //       with defined optimal outputs
   // define_sample_input();
-
 
   /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
@@ -84,10 +80,10 @@ int main(int argc, char* argv[]) {
     // better: poisson distributed:
     // this allows for more aggressive changes (count>1), while still keeping most power on small count values,
     // thus guaranteeing
-    //
     //    1. many easy changes (higher probability to succeed in compilation and reproduction)
     //    2. evasion of any minimum where more than one change is necessary to get out of
-    unsigned int cycles = distribution(generator) + 1;
+
+    unsigned int cycles = get_cycles( params.pois_cycles );
     DEBUG && std::cout << "cycles = " << cycles << std::endl;
 
     vuc loc_memblock = memblock;
