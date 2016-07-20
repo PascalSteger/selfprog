@@ -34,14 +34,15 @@ int main(int argc, char* argv[]) {
   std::string random_file = find_random_starting_cell(); // find random file from directory with reproducing cells
   // random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
   std::cout << ".. starting gene: " << random_file << std::endl;
+
   FILE * file = open_file(random_file);
   long fsize = find_filesize(file);
   assert(fsize>0);
   vuc memblock(fsize);
   std::fread(&memblock[0], sizeof(unsigned char), memblock.size(), file);
   fclose(file);
-  //print_chars_v(memblock);
-  DEBUG && std::cout << "the entire cell content is in memory" << std::endl;
+
+  print_debug( "the entire cell content is in memory" );
   sleep(1);
 
   // write input file dynamically to test intelligent answer
@@ -89,10 +90,11 @@ int main(int argc, char* argv[]) {
     vuc loc_memblock = memblock;
     assert(loc_memblock.size() > 0);
     for(unsigned int j=1; j <= cycles; j++){
-      // choose of three options:
-      //  0: add random byte at random position,
-      //  1: change byte at random position
-      //  2: delete byte from random position
+
+      // choose one of three options:
+      //  0:    add random byte at random position,
+      //  1:    change byte at random position
+      //  2:    delete byte from random position
       int option = rand()%3;
       if(option == 0){
         DEBUG && std::cout << "delete random byte" << std::endl;
