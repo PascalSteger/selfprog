@@ -130,19 +130,14 @@ int main(int argc, char* argv[]) {
     std::string filename_cp = filename;
 
     /********************  execute with sample input text ********************/
-    std::string erroutput = "";
-    erroutput = my_system("timeout 1s " + filename + " < "
+    std::string erroutput = my_system("timeout 1s " + filename + " < "
                           + PATH_CELL+"input > "+ PATH_CELL + "output; echo $?");
-
-    std::cout << "erroutput: " << std::atoi(erroutput.c_str()) << " ";
     if(std::atoi(erroutput.c_str()) == 124){
-      // TODO: store in status
-      // std::cout << "##### program took too long, aborting ####\r" << std::flush;
+      std::cout << "##### program took too long, aborting ####\r" << std::flush;
       remove(filename.c_str());
       print_status(now);
       continue;
     }
-
 
     /******************** check re-compilation of self ********************/
     write_progcell(loc_memblock);
@@ -155,32 +150,10 @@ int main(int argc, char* argv[]) {
       print_status(now);
       store_cell_in_reproduce_set(loc_memblock);
 
-      // determine how well output performs on training samples
-      std::string fnout = PATH_CELL + "output";
-      FILE * fout = open_file(fnout);
-      long foutsize = find_filesize(fout);
-      vuc foutmem(foutsize);
-      std::fread(&foutmem[0], sizeof(unsigned char), foutmem.size(), fout);
-      fclose(fout);
-
-      std::cout << std::endl << " output is of size " << foutsize << std::endl;
-      print_chars_v(foutmem);
-
-      std::string fnexp = PATH_CELL + "expect";
-      FILE * fexp = open_file(fnexp);
-      long fexpsize = find_filesize(fexp);
-      vuc fexpmem(fexpsize);
-      std::fread(&fexpmem[0], sizeof(unsigned char), fexpmem.size(), fexp);
-      fclose(fexp);
-
-      std::cout << std::endl << " expect is of size " << fexpsize << std::endl;
-      print_chars_v(fexpmem);
-      std::cout << std::endl;
-
-      double cosphi = calc_similarity(foutmem, foutsize, fexpmem, fexpsize);
+      double cosphi = check_training_performance();
       std::cout << "  similarity: " << cosphi << std::endl;
 
-      // TODO store similarity = fitness output alongside the output, e.g. in its name
+      // store similarity = fitness output alongside the output, e.g. in its name
       filename_cp += "_" + std::to_string(cosphi);
       my_system("mv " + filename + " " + filename_cp);
     } else {

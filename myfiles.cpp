@@ -10,6 +10,8 @@
 #include "datastructures.hpp"
 #include "mysystem.hpp"
 #include "timestamp.hpp"
+#include "myoutput.hpp"
+#include "similarity.hpp"
 
 char* read_output(){
   std::streampos size;
@@ -116,4 +118,31 @@ void write_progcell(vuc loc_memblock){
     fprintf(progcell, " %02hhx", loc_memblock[k]);
   }
   fclose (progcell);
+}
+
+double check_training_performance(){
+  // determine how well output performs on training samples
+  std::string fnout = PATH_CELL + "output";
+  FILE * fout = open_file(fnout);
+  long foutsize = find_filesize(fout);
+  vuc foutmem(foutsize);
+  std::fread(&foutmem[0], sizeof(unsigned char), foutmem.size(), fout);
+  fclose(fout);
+
+  std::cout << std::endl << " output is of size " << foutsize << std::endl;
+  print_chars_v(foutmem);
+
+  std::string fnexp = PATH_CELL + "expect";
+  FILE * fexp = open_file(fnexp);
+  long fexpsize = find_filesize(fexp);
+  vuc fexpmem(fexpsize);
+  std::fread(&fexpmem[0], sizeof(unsigned char), fexpmem.size(), fexp);
+  fclose(fexp);
+
+  std::cout << std::endl << " expect is of size " << fexpsize << std::endl;
+  print_chars_v(fexpmem);
+  std::cout << std::endl;
+
+  double cosphi = calc_similarity(foutmem, foutsize, fexpmem, fexpsize);
+  return cosphi;
 }
