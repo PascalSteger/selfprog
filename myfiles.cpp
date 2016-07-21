@@ -66,6 +66,10 @@ std::string find_random_starting_cell( void ){
   glob_t glob_result;
   glob("/tmp/cell/reproduce/cell*", GLOB_TILDE, NULL, &glob_result );
   std::string random_file = glob_result.gl_pathv[rand()%glob_result.gl_pathc];
+  if(DEBUG){
+    // override cell name with known good one
+    random_file = PATH_PROG + "cell";
+  }
   return random_file;}
 
 bool store_cell_in_reproduce_set(vuc loc_memblock){

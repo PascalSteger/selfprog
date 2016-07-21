@@ -10,8 +10,8 @@ void setup_dirs( void ){
   // seed new directory with at least one reproducing program
   my_system("cp " + PATH_PROG + "cell "+ PATH_REPRODUCE);
   // TODO copy meaningful files input_111 and output, after debugging
-  my_system("cp "+PATH_PROG+"input_111 "+PATH_CELL+"input");
-  my_system("cp "+PATH_PROG+"expect_111 "+PATH_CELL+"expect");
+  my_system("cp " + PATH_TRAINING + "input_111 " + PATH_CELL + "input");
+  my_system("cp " + PATH_TRAINING + "expect_111 " + PATH_CELL + "expect");
   my_mkdir(PATH_CELL+"backup");}
 
 void define_sample_input( void ){

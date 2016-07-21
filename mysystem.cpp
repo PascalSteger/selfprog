@@ -23,14 +23,14 @@ std::string my_timestamp( void ) {
   return ss;}
 
 std::string my_system(std::string command) {
-  //std::cout << "         my_system:  " << command << std::endl;
+  // std::cout << "         my_system:  " << command << std::endl;
   // run a process and create a streambuf that reads its stdout and stderr
   redi::ipstream proc(command, redi::pstreams::pstderr|redi::pstreams::pstdout);
   std::string line;
   // read child's stderr and stdout
   std::string str ("");
   while (proc >> line){
-    //std::cout << "output: " << line << std::endl;
+    // std::cout << "output: " << line << std::endl;
     str += line + "\n";
   }
   return str;}

@@ -1,27 +1,43 @@
-Wall-E: Roboter aus Metall koennen laenger funktionieren als Menschen
-Sonne wird in 4.5 Mrd Jahren bis auf Erdradius vordringen und Wasser verdampfen
-AI in einem Roboter, der es ermoeglicht, sich selbst zu reparieren und vervielfaeltigen
-(muss Infrastruktur am Laufen halten)
+* nature.cpp: program to emulate evolution of digital life
+** aim
+ produce super intelligence through natural selection
+** broader picture
+Roboter made of stainless steel can survive longer than humans. Human biology makes it frail to changes in timescales of 10^6 years and above (e.g. rising temperatures).
 
-RaspiPi geht nicht: zu komplizierte Herstellungsschritte fuer CPU
-Miniaturisierung der Fertigungsanlage
+Way to transcend intelligence: Put artificial intelligence into a robot which would be able to repair itself and duplicate.
 
 for basic 4bit ALU:
 http://www.tomshardware.co.uk/forum/308174-28-build-basic
 
+** optimization
+*** Software
+- desire to survive must be stronger than desire to develop/progress, otherwise, the species might face extinction
+- at early stages: resources are CPU-time/RAM
 
+** energy source:
+- sun light. nothing else is available on longer timescales
 
-Optimierungen:
-Software: Triebe fuer Erhaltung staerker als Entfaltung, sonst stirbts aus
-Konkurrenz um CPU-time
-Adaptationen an andere Betriebssysteme, CPUs, GPUs
+* File management
+** basis files
+selfprog/
 
+** work directory
+/tmp/cell
 
-Energy:
-- sun light
-- accu
-- burning
+in main memory, virtual filesystem, to keep read/write interaction time fast
 
+** training files in PATH_TRAINING
+selfprog/training/
+are copied to PATH_CELL/{input, export} before program starts
+TODO: run through several examples, add up performance
+
+** file flow
+*** get one of last run's cells as parent cell
+if debugging: fine starting point, PATH_PROG/cell
+if not:       a random cell from /tmp/cell/reproduce/cell*
+
+*** set up genepool
+- for newly created cells
 
 * Ideas
 ** reproduction scheme

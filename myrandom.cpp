@@ -18,5 +18,9 @@ unsigned int get_cycles( float pois_cycles ) {
   std::default_random_engine generator;
   std::poisson_distribution<int> distribution(pois_cycles);
   unsigned int cycles = distribution(generator) + 1;
+  if(DEBUG){
+    std::cout << "cycles = " << cycles << std::endl;
+  }
+
   return cycles;
 }

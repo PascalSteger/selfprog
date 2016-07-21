@@ -1,6 +1,3 @@
-// nature.cpp: program to emulate evolution of digital life
-// aim: produce super intelligence through natural selection
-
 #include <iostream>      /* cin, cout */
 #include <limits.h>      /* UCHAR_MAX, char_to_bin */
 #include <map>           /* std::multimap */
@@ -28,10 +25,8 @@ int main(int argc, char* argv[]) {
   status_struct now;
 
   initialize_random();
-
   setup_dirs();
   std::string random_file = find_random_starting_cell(); // find random file from directory with reproducing cells
-  // random_file = "/home/psteger/dev/selfprog/cell";    // override cell name with known good one
   std::cout << ".. starting gene: " << random_file << std::endl;
 
   FILE * file = open_file(random_file);
@@ -59,9 +54,7 @@ int main(int argc, char* argv[]) {
   for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
     now.N = iteration;
     std::cout << iteration << ": ";
-
     unsigned int cycles = get_cycles( params.pois_cycles );
-    DEBUG && std::cout << "cycles = " << cycles << std::endl;
 
     vuc loc_memblock = memblock;
     assert(loc_memblock.size() > 0);
@@ -131,7 +124,7 @@ int main(int argc, char* argv[]) {
 
     /********************  execute with sample input text ********************/
     std::string erroutput = my_system("timeout 1s " + filename + " < "
-                          + PATH_CELL+"input > "+ PATH_CELL + "output; echo $?");
+                          + PATH_CELL + "input > "+ PATH_CELL + "output; echo $?");
     if(std::atoi(erroutput.c_str()) == 124){
       std::cout << "##### program took too long, aborting ####\r" << std::flush;
       remove(filename.c_str());
@@ -141,7 +134,7 @@ int main(int argc, char* argv[]) {
 
     /******************** check re-compilation of self ********************/
     write_progcell(loc_memblock);
-    my_system(filename + " < "+PATH_CELL+"progcell > "+PATH_CELL+"outcell");
+    my_system(filename + " < " + PATH_CELL + "progcell > " + PATH_CELL + "outcell");
     vuc outblock = check_reproductive();
 
     if(outblock == loc_memblock){
