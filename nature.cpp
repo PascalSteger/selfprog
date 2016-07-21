@@ -39,18 +39,13 @@ int main(int argc, char* argv[]) {
   print_debug( "the entire cell content is in memory" );
   sleep(1);
 
-  // write input file dynamically to test intelligent answer
-  // TODO: replace with system to choose from set of patterns
-  //       with defined optimal outputs
-  // define_sample_input();
-
   /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
   std::multimap<vuc, vuc> genepool;
   vuc vmyha = my_hash(memblock);
   genepool.insert(std::pair<vuc, vuc>(vmyha, memblock));
 
-  bool has_not_reproduced = true;
+  unsigned int successful_reproduction = 0;
   for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
     now.N = iteration;
     std::cout << iteration << ": ";
@@ -59,11 +54,6 @@ int main(int argc, char* argv[]) {
     vuc loc_memblock = memblock;
     assert(loc_memblock.size() > 0);
     for(unsigned int j=1; j <= cycles; j++){
-
-      // choose one of three options:
-      //  0:    add random byte at random position,
-      //  1:    change byte at random position
-      //  2:    delete byte from random position
       int option = rand()%3;
       if(option == 0){
         print_debug( "delete random byte" );
@@ -72,39 +62,33 @@ int main(int argc, char* argv[]) {
           continue;
         }
         unsigned pos_del = rand()%loc_memblock.size();
-        DEBUG && printf("delete byte at position %d\n", pos_del);
+        if(DEBUG) printf("delete byte at position %d\n", pos_del);
         loc_memblock.erase( loc_memblock.begin()+pos_del);
-        //print_chars(loc_memblock, fsize);
       } else if (option == 1) {
         print_debug( "add random byte at random position" );
         unsigned pos_add = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
-        DEBUG && printf("add byte %02hhx at position %d\n", val, pos_add);
+        if(DEBUG) printf("add byte %02hhx at position %d\n", val, pos_add);
         loc_memblock.insert( loc_memblock.begin()+pos_add, val);
       } else if (option == 2) {
         print_debug( "change random byte" );
         unsigned pos_change = rand()%loc_memblock.size();
         char val = rand()%UCHAR_MAX;
-        DEBUG && printf("change byte at position %d to %02hhx\n", pos_change, val);
+        if(DEBUG) printf("change byte at position %d to %02hhx\n", pos_change, val);
         loc_memblock[pos_change] = val;
-        //print_chars(loc_memblock, fsize);
       } else {
         std::cerr << "option must be one of 1,2,3, got " << option << std::endl;
         exit(1);
       }    }
     print_debug( "finished changes" );
 
-
     /********************  compare to old genes   ********************/
     vuc vmyha = my_hash(loc_memblock);    // get hash of gene = vuc
-
-    // find all programs with same hash
     std::pair <std::multimap<vuc,vuc>::iterator, std::multimap<vuc,vuc>::iterator> ret;
     ret = genepool.equal_range(vmyha);
     bool found_old = false;
     for (std::multimap<vuc,vuc>::iterator it=ret.first; it!=ret.second; ++it){
-      // compare new vuc to all previous ones
-      // if old found => continue
+      // compare new vuc to all previous ones. if old found => continue
       if(loc_memblock == it->second){
         print_status(now);
         found_old = true;
@@ -112,12 +96,8 @@ int main(int argc, char* argv[]) {
       }
     }
     if(found_old) continue;
-
-    // store new (hash, vuc) key-value-pair
     genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
-    // std::cout << "pool: " << genepool.size() << ", ";
     now.poolsize = genepool.size();
-
 
     std::string filename = write_new_cell(loc_memblock);
     std::string filename_cp = filename;
@@ -138,10 +118,10 @@ int main(int argc, char* argv[]) {
     vuc outblock = check_reproductive();
 
     if(outblock == loc_memblock){
-      has_not_reproduced = false;
+      successful_reproduction += 1;
       now.nu++;
       print_status(now);
-      store_cell_in_reproduce_set(loc_memblock);
+      // store_cell_in_reproduce_set(loc_memblock);
 
       double cosphi = check_training_performance();
       std::cout << "  similarity: " << cosphi << std::endl;
@@ -149,6 +129,8 @@ int main(int argc, char* argv[]) {
       // store similarity = fitness output alongside the output, e.g. in its name
       filename_cp += "_" + std::to_string(cosphi);
       my_system("mv " + filename + " " + filename_cp);
+      chmod(filename_cp.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+      my_system("mv " + filename_cp + " " + PATH_REPRODUCE);
     } else {
       print_status(now);
     }
@@ -156,11 +138,17 @@ int main(int argc, char* argv[]) {
     remove(filename.c_str());
     remove((PATH_CELL + "outcell").c_str());
     remove((PATH_CELL + "output").c_str());
+    remove((PATH_CELL + "progcell").c_str());
+
+    if(successful_reproduction > N_LITTER){
+      break;
+    }
   }
-  if(has_not_reproduced){  // after N iterations, remove uncooperative cell
-    std::cout << std::endl << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
+
+  /************************ cleanup ****************************************/
+  restrict_cell_population();
+  if(successful_reproduction == 0){
     remove(random_file.c_str());
-  } else {
-    std::cout << std::endl << "cell " << random_file << " got reproductive offspring, keeping it" << std::endl;
+    std::cout << std::endl << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
   }
 }

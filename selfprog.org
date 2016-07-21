@@ -25,10 +25,11 @@ selfprog/
 /tmp/cell
 
 in main memory, virtual filesystem, to keep read/write interaction time fast
+created at start if not existing
 
 ** training files in PATH_TRAINING
 selfprog/training/
-are copied to PATH_CELL/{input, export} before program starts
+input_111 and expect_111 are copied to PATH_CELL/{input, export} before program starts
 TODO: run through several examples, add up performance
 
 ** file flow
@@ -37,10 +38,29 @@ if debugging: fine starting point, PATH_PROG/cell
 if not:       a random cell from /tmp/cell/reproduce/cell*
 
 *** set up genepool
-- for newly created cells
+- for storing hashes of newly created cells
+- if new cell not found in hash genepool, create new file in /tmp/cell/cell_timestampmusec
+
+*** check if it executes
+- with input, output files, which will later be compared to expect
+- if it takes too long, continue with next cell
+
+*** check if it recompiles itself
+- write cell content in text format to /tmp/cell/progcell
+- input is  /tmp/cell/progcell
+- output is /tmp/cell/outcell
+
+*** remove temporary outputs
+- /tmp/cell/outcell
+- /tmp/cell/output
+- /tmp/cell/progcell
+
+*** if after all N modifications cell has not changed
+- remove starting cell from "reproduce set"
+
 
 * Ideas
-** reproduction scheme
+** fraction of changes
 We have to find a tradeoff between number of changes we make, and number of allowed genes at any given point in time.
 In the one extreme, we could change a high number of bytes of the cell, get huge leaps in evolution, but risk non-reproductivity.
 The other extreme sees the smallest possible changes, only 1 byte at a time, best possible survivability, but really slow evolution.
@@ -60,18 +80,24 @@ What is the sweet spot?
 *** number of changes depending on..
  - length of program
  - performance of program
+** cell collection management
+*** large cell collection
+ Got to make sure the program can run with a large number of programs in the cell collection,
+ e.g. with moving window (last N genes)
+ or sending to database in background (and reading in most used genes)
 
-** genepool management
-*** large genepool
-         Got to make sure the program can run with very large number of programs in the genepool,
-         e.g. with moving window (last N genes)
-         or sending to database in background (and reading in most used genes)
-         OR: not caring about full history, take any of the reproducing programs and start genepool from them
-         this way, we can have several instances of nature.cpp run in parallel, each with a different starting program,
-         and after N iterations, another instance is started instead
+ OR: not caring about full history, take any of the reproducing programs and start genepool from them
+ this way, we can have several instances of nature.cpp run in parallel, each with a different starting program,
+ and after N iterations, another instance is started instead
 
-    if(iteration % 100 == 0){
+ if(iteration % 100 == 0){
      output multimap to file for later reference
      std::multimap<vuc, vuc>::iterator it = genepool.first;
      ...
-    }
+ }
+*** small cell collection
+ another possibility is to run with fewer iterations, and keep only one of the many generated programs
+ say, after 10 program runs are done, stop and select some to represent the next stage
+ based on their performance on sample input
+
+ good test score means higher likelihood to get selected
