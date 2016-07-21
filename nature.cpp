@@ -122,11 +122,10 @@ int main(int argc, char* argv[]) {
 
     // store new (hash, vuc) key-value-pair
     genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
-    //std::cout << "pool: " << genepool.size() << ", ";
+    // std::cout << "pool: " << genepool.size() << ", ";
     now.poolsize = genepool.size();
 
 
-    /********************  write new cell         ********************/
     std::string filename = write_new_cell(loc_memblock);
     std::string filename_cp = filename;
 
@@ -158,24 +157,12 @@ int main(int argc, char* argv[]) {
 
     /******************** check re-compilation of self ********************/
     my_system(filename + " < "+PATH_CELL+"progcell > "+PATH_CELL+"outcell");
-    // in output of cell run on itself
-    FILE * compfile;
-    long outfsize = 0;
-    compfile = fopen ( (PATH_CELL+"outcell").c_str() , "rb" );
-    if (compfile==NULL) {fputs ("File error\n", stderr); exit (1);}
-    fseek (compfile , 0 , SEEK_END);
-    outfsize = ftell (compfile);
-    rewind (compfile);
-    vuc outblock(outfsize);
-    std::fread(&outblock[0], sizeof(unsigned char), outblock.size(), compfile);
-    fclose(compfile);
-    print_debug( "the cell output content is in memory" );
+    vuc outblock = check_reproductive();
 
     if(outblock == loc_memblock){
       has_not_reproduced = false;
       now.nu++;
       print_status(now);
-
       store_cell_in_reproduce_set(loc_memblock);
 
       // determine how well output performs on training samples
@@ -214,8 +201,7 @@ int main(int argc, char* argv[]) {
     remove((PATH_CELL + "outcell").c_str());
     remove((PATH_CELL + "output").c_str());
   }
-  if(has_not_reproduced){  // after N iterations
-    // remove uncooperative cell
+  if(has_not_reproduced){  // after N iterations, remove uncooperative cell
     std::cout << std::endl << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
     remove(random_file.c_str());
   } else {

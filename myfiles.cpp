@@ -89,3 +89,22 @@ std::string write_new_cell(vuc loc_memblock){
   chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
   return filename;
 }
+
+
+vuc check_reproductive( void ){
+  FILE * compfile;
+  long outfsize = 0;
+  compfile = fopen ( (PATH_CELL+"outcell").c_str() , "rb" );
+  if (compfile==NULL) {
+    fputs ("File error\n", stderr);
+    exit (1);}
+
+  fseek (compfile , 0 , SEEK_END);
+  outfsize = ftell (compfile);
+  rewind (compfile);
+  vuc outblock(outfsize);
+  std::fread(&outblock[0], sizeof(unsigned char), outblock.size(), compfile);
+  fclose(compfile);
+  print_debug( "the cell output content is in memory" );
+  return outblock;
+}
