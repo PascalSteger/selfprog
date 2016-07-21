@@ -27,12 +27,11 @@ int main(int argc, char* argv[]) {
   param_struct params = parse_params(argc, argv);
   status_struct now;
 
-  // set random generator and Poisson distribution characteristics for count of # changes
   initialize_random();
 
   setup_dirs();
   std::string random_file = find_random_starting_cell(); // find random file from directory with reproducing cells
-  // random_file = "/home/psteger/dev/selfprog/cell"; // override cell name with known good one
+  // random_file = "/home/psteger/dev/selfprog/cell";    // override cell name with known good one
   std::cout << ".. starting gene: " << random_file << std::endl;
 
   FILE * file = open_file(random_file);
@@ -57,32 +56,9 @@ int main(int argc, char* argv[]) {
   genepool.insert(std::pair<vuc, vuc>(vmyha, memblock));
 
   bool has_not_reproduced = true;
-  // main loop
   for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
     now.N = iteration;
-    //if(iteration % 100 == 0){
-      // output multimap to file for later reference
-      // ideas:
-      /*
-        Got to make sure the program can run with very large number of programs in the genepool,
-        e.g. with moving window (last N genes)
-        or sending to database in background (and reading in most used genes)
-        OR: not caring about full history, take any of the reproducing programs and start genepool from them
-        this way, we can have several instances of nature.cpp run in parallel, each with a different starting program,
-        and after N iterations, another instance is started instead
-       */
-
-      //std::multimap<vuc, vuc>::iterator it = genepool.first;
-    //}
-
     std::cout << iteration << ": ";
-    // determine number of bytes to get changed
-    // unsigned int cycles = rand() % 10;
-    // better: poisson distributed:
-    // this allows for more aggressive changes (count>1), while still keeping most power on small count values,
-    // thus guaranteeing
-    //    1. many easy changes (higher probability to succeed in compilation and reproduction)
-    //    2. evasion of any minimum where more than one change is necessary to get out of
 
     unsigned int cycles = get_cycles( params.pois_cycles );
     DEBUG && std::cout << "cycles = " << cycles << std::endl;
@@ -151,18 +127,8 @@ int main(int argc, char* argv[]) {
 
 
     /********************  write new cell         ********************/
-    // write memblock to new file, byte-wise
-    std::string filename (PATH_CELL+"cell_");
-    filename = filename + my_timestamp() + musec();
+    std::string filename = write_new_cell(loc_memblock);
     std::string filename_cp = filename;
-    DEBUG && std::cout << "filename with timestamp = " << filename << std::endl;
-    FILE * outfile;
-    outfile = fopen (filename.c_str(), "wb");
-    fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), outfile);
-    fclose (outfile);
-    // make file executable
-    chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
-
 
     /********************  execute with sample input text ********************/
     std::string erroutput = "";

@@ -21,3 +21,41 @@ Energy:
 - sun light
 - accu
 - burning
+
+
+* Ideas
+** reproduction scheme
+We have to find a tradeoff between number of changes we make, and number of allowed genes at any given point in time.
+In the one extreme, we could change a high number of bytes of the cell, get huge leaps in evolution, but risk non-reproductivity.
+The other extreme sees the smallest possible changes, only 1 byte at a time, best possible survivability, but really slow evolution.
+What is the sweet spot?
+
+*** uniform random distribution for number of changes
+    // determine number of bytes to get changed
+    // unsigned int cycles = rand() % 10;
+
+*** Poisson distribution for number of changes
+    // better: poisson distributed:
+    // this allows for more aggressive changes (count>1), while still keeping most power on small count values,
+    // thus guaranteeing
+    //    1. many easy changes (higher probability to succeed in compilation and reproduction)
+    //    2. evasion of any minimum where more than one change is necessary to get out of
+
+*** number of changes depending on..
+ - length of program
+ - performance of program
+
+** genepool management
+*** large genepool
+         Got to make sure the program can run with very large number of programs in the genepool,
+         e.g. with moving window (last N genes)
+         or sending to database in background (and reading in most used genes)
+         OR: not caring about full history, take any of the reproducing programs and start genepool from them
+         this way, we can have several instances of nature.cpp run in parallel, each with a different starting program,
+         and after N iterations, another instance is started instead
+
+    if(iteration % 100 == 0){
+     output multimap to file for later reference
+     std::multimap<vuc, vuc>::iterator it = genepool.first;
+     ...
+    }

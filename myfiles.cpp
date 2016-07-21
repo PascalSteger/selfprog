@@ -73,4 +73,19 @@ bool store_cell_in_reproduce_set(vuc loc_memblock){
   fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), progcell);
   // make file executable
   chmod(fn_working.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+  return true;
+}
+
+std::string write_new_cell(vuc loc_memblock){
+  // write memblock to new file, byte-wise
+  std::string filename (PATH_CELL+"cell_");
+  filename = filename + my_timestamp() + musec();
+  DEBUG && std::cout << "filename with timestamp = " << filename << std::endl;
+  FILE * outfile;
+  outfile = fopen (filename.c_str(), "wb");
+  fwrite (&loc_memblock[0] , sizeof(char), loc_memblock.size(), outfile);
+  fclose (outfile);
+  // make file executable
+  chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+  return filename;
 }
