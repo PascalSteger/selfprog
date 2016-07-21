@@ -90,7 +90,6 @@ std::string write_new_cell(vuc loc_memblock){
   return filename;
 }
 
-
 vuc check_reproductive( void ){
   FILE * compfile;
   long outfsize = 0;
@@ -98,7 +97,6 @@ vuc check_reproductive( void ){
   if (compfile==NULL) {
     fputs ("File error\n", stderr);
     exit (1);}
-
   fseek (compfile , 0 , SEEK_END);
   outfsize = ftell (compfile);
   rewind (compfile);
@@ -107,4 +105,15 @@ vuc check_reproductive( void ){
   fclose(compfile);
   print_debug( "the cell output content is in memory" );
   return outblock;
+}
+
+void write_progcell(vuc loc_memblock){
+  /*         od -An -tx1 singles/$nextfile > progcell */
+  FILE * progcell;
+  progcell = fopen ((PATH_CELL+"progcell").c_str(), "wb");
+  // get char values one by one, in hex representation
+  for(unsigned int k=0; k<loc_memblock.size(); k++){
+    fprintf(progcell, " %02hhx", loc_memblock[k]);
+  }
+  fclose (progcell);
 }

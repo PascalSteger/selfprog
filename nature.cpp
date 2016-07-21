@@ -144,18 +144,8 @@ int main(int argc, char* argv[]) {
     }
 
 
-    /********************  sorting out non-reproductive cells ********************/
-    /*         od -An -tx1 singles/$nextfile > progcell */
-    FILE * progcell;
-    progcell = fopen ((PATH_CELL+"progcell").c_str(), "wb");
-    // get char values one by one, in hex representation
-    for(unsigned int k=0; k<loc_memblock.size(); k++){
-      fprintf(progcell, " %02hhx", loc_memblock[k]);
-    }
-    fclose (progcell);
-
-
     /******************** check re-compilation of self ********************/
+    write_progcell(loc_memblock);
     my_system(filename + " < "+PATH_CELL+"progcell > "+PATH_CELL+"outcell");
     vuc outblock = check_reproductive();
 
