@@ -104,3 +104,21 @@ What is the sweet spot?
 
 *** TODO enable genepool for 10 litter runs
 - thus using one setup cost for 10 runs with 10 parent cells
+** creation of intelligent answers
+- 1:1 translation needed for accepting cell as "reproductive"
+- completely prohibits intelligent answer to input_111 pattern if expect is shifted
+- better: allow small changes in reproduction, search for, say, 99% fidelity, allowing other output
+
+*** pattern training
+**** differing length outputs
+- 1:1 as starting point
+- want to get only one next number, so have to get mechanism that truncates output
+- either externally (compare only output on first byte)
+- or internally: allow program to return 1 byte less
+**** several training input/output pairs
+- add log performance score of [sample selection] = [environment]
+
+*** randomness
+**** include source of randomness in cell
+- either as additional input, e.g. via 1 byte from /dev/random at fixed position
+- or via a system call from inside

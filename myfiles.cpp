@@ -133,7 +133,7 @@ double check_training_performance(){
   std::fread(&foutmem[0], sizeof(unsigned char), foutmem.size(), fout);
   fclose(fout);
 
-  if(DEBUG){
+  if(DEBUG || true){
     std::cout << std::endl << " output is of size " << foutsize << std::endl;
     print_chars_v(foutmem);
   }
@@ -145,7 +145,7 @@ double check_training_performance(){
   std::fread(&fexpmem[0], sizeof(unsigned char), fexpmem.size(), fexp);
   fclose(fexp);
 
-  if(DEBUG){
+  if(DEBUG || true){
     std::cout << std::endl << " expect is of size " << fexpsize << std::endl;
     print_chars_v(fexpmem);
     std::cout << std::endl;
@@ -218,11 +218,14 @@ void restrict_cell_population(){
     double ra = dis(gen);
 
     // std::cout << "   random number: " << ra << std::flush << std::endl;
-    if(ra < performance){
+    if(ra >= performance){
       // if not good enough: remove from multimap
       my_system("rm " + filename );
       allcells.erase(it);
       std::cout << "cell " + filename + " died!" << std::flush << std::endl;
+    } else {
+      std::cout << "cell " + filename + " survived!" << std::flush << std::endl;
     }
+
   }
 }
