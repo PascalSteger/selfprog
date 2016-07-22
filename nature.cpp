@@ -35,9 +35,7 @@ int main(int argc, char* argv[]) {
   vuc memblock(fsize);
   std::fread(&memblock[0], sizeof(unsigned char), memblock.size(), file);
   fclose(file);
-
   print_debug( "the entire cell content is in memory" );
-  sleep(1);
 
   /********************  define genepool  ********************/
   // need std::multimap for storing multiple std::vector values at same key
@@ -45,10 +43,10 @@ int main(int argc, char* argv[]) {
   vuc vmyha = my_hash(memblock);
   genepool.insert(std::pair<vuc, vuc>(vmyha, memblock));
 
-  for(unsigned int litter = 0; litter < params.Nlitters; litter++){
+  for(unsigned int litter = 0; litter < params.N_LITTERS; litter++){
     now.litter = litter;
     unsigned int successful_reproduction = 0;
-    for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
+    for(unsigned int iteration = 0; iteration < params.N_MAX_ITERATIONS; iteration++){
       now.N = iteration;
       unsigned int cycles = get_cycles( params.pois_cycles );
 
@@ -123,7 +121,7 @@ int main(int argc, char* argv[]) {
         print_status(now);
 
         double cosphi = check_training_performance();
-        std::cout << "  similarity: " << cosphi << std::endl;
+        std::cout << "  training similarity: " << cosphi << std::endl;
 
         // store fitness = similarity alongside the output, e.g. in its name
         filename_cp += "_" + std::to_string(cosphi);
@@ -139,7 +137,7 @@ int main(int argc, char* argv[]) {
       remove((PATH_CELL + "output").c_str());
       remove((PATH_CELL + "progcell").c_str());
 
-      if(successful_reproduction > N_LITTER){
+      if(successful_reproduction > params.N_PER_LITTER){
         break;
       }
     } // end for loop on iteration
@@ -151,5 +149,5 @@ int main(int argc, char* argv[]) {
     }
   } // end for loop on litter
 
-  restrict_cell_population();
+  restrict_cell_population( params );
 }

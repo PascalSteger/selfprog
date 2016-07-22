@@ -169,7 +169,7 @@ double check_reproduction_performance(vuc origin, vuc repro){
   }
 
   double cosphi = calc_similarity(origin, origin.size(), repro, repro.size());
-  if ( cosphi > 0 ) std::cout << " repro similarity: " << cosphi << std::flush << std::endl;
+  // if ( cosphi > 0 ) std::cout << " repro similarity: " << cosphi << std::flush << std::endl;
   return cosphi;}
 
 std::multimap<std::string, double> get_directory_content(std::string mydir){
@@ -206,10 +206,9 @@ std::multimap<std::string, double> get_directory_content(std::string mydir){
   } else {
     perror ("could not open directory");
   }
-  return dircontents;
-}
+  return dircontents;}
 
-void restrict_cell_population(){
+void restrict_cell_population(param_struct params){
   // list all (file,test_score) in PATH_REPRODUCE
   std::multimap<std::string, double> allcells = get_directory_content(PATH_REPRODUCE);
 
@@ -220,8 +219,11 @@ void restrict_cell_population(){
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(0, 1);
 
+  unsigned int survivors = 0;
+  unsigned int dead = 0;
+
   // as long as there are too many cells:
-  while(allcells.size() > N_CONCURRENT){
+  while(allcells.size() > params.N_CONCURRENT){
     // find random element
     // std::cout << "find random element " << std::flush << std::endl;
     std::multimap<std::string, double>::iterator it = allcells.begin();
@@ -240,10 +242,12 @@ void restrict_cell_population(){
       // if not good enough: remove from multimap
       my_system("rm " + filename );
       allcells.erase(it);
-      std::cout << "cell " + filename + " died!" << std::flush << std::endl;
+      if(DEBUG) std::cout << "cell " + filename + " died!" << std::flush << std::endl;
+      dead += 1;
     } else {
-      std::cout << "cell " + filename + " survived!" << std::flush << std::endl;
+      if(DEBUG) std::cout << "cell " + filename + " survived!" << std::flush << std::endl;
+      survivors += 1;
     }
-
   }
+  std::cout << survivors << " survived, " << dead << " died" << std::endl;
 }

@@ -16,6 +16,6 @@ void write_progcell(vuc loc_memblock);
 double check_training_performance( void );
 double check_reproduction_performance(vuc origin, vuc repro);
 std::multimap<std::string, double> get_directory_content(std::string mydir);
-void restrict_cell_population( void );
+void restrict_cell_population( param_struct params);
 
 #endif

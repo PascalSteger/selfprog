@@ -8,7 +8,6 @@
 
 param_struct parse_params( int argc, char* argv[]){
   param_struct fill;
-  fill.Niterations = 300;
   fill.pois_cycles = 0.5;
   // run through all possible runtime parameters with a loop
   for (int i = 1; i < argc; ++i) {
@@ -24,7 +23,7 @@ param_struct parse_params( int argc, char* argv[]){
       exit(0);
     } else if ((arg == "-i") || (arg == "--iterations")) {
       if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-        fill.Niterations = atoi(argv[++i]); // Increment 'i' so we don't get the argument as the next argv[i].
+        fill.N_MAX_ITERATIONS = atoi(argv[++i]); // Increment 'i' so we don't get the argument as the next argv[i].
       } else { // Uh-oh, there was no argument to the destination option.
         std::cerr << "-i|--iterations option requires one argument." << std::endl;
       }
@@ -36,5 +35,5 @@ param_struct parse_params( int argc, char* argv[]){
       }
     }
   }
-  DEBUG && std::cout << "Niterations = " << fill.Niterations << std::endl;
+  if(DEBUG) std::cout << "N_MAX_ITERATIONS = " << fill.N_MAX_ITERATIONS << std::endl;
   return fill;}
