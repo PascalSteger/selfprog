@@ -26,7 +26,8 @@ void print_chars_v(vuc mem){
 void print_status(status_struct mystatus){
   // delete previous output line:
   std::cout << "\r                                                                 \r";
-  std::cout << "N: " << mystatus.N; //<< " P: " << mystatus.poolsize;
+  std::cout << "litter: " << mystatus.litter;
+  std::cout << " N: " << mystatus.N; //<< " P: " << mystatus.poolsize;
   std::cout << " new: " << mystatus.nu << std::flush;}
 
 void show_usage( std::string name ) {

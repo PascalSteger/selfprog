@@ -45,110 +45,114 @@ int main(int argc, char* argv[]) {
   vuc vmyha = my_hash(memblock);
   genepool.insert(std::pair<vuc, vuc>(vmyha, memblock));
 
-  unsigned int successful_reproduction = 0;
-  for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
-    now.N = iteration;
-    std::cout << iteration << ": ";
-    unsigned int cycles = get_cycles( params.pois_cycles );
+  for(unsigned int litter = 0; litter < params.Nlitters; litter++){
+    now.litter = litter;
+    unsigned int successful_reproduction = 0;
+    for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
+      now.N = iteration;
+      // std::cout << "litter " << litter << ", it " << iteration << ": ";
+      unsigned int cycles = get_cycles( params.pois_cycles );
 
-    vuc loc_memblock = memblock;
-    assert(loc_memblock.size() > 0);
-    for(unsigned int j=1; j <= cycles; j++){
-      int option = rand()%3;
-      if(option == 0){
-        print_debug( "delete random byte" );
-        if(loc_memblock.size() == 1){
-          std::cerr << "Too short program: cannot delete byte" << std::endl;
-          continue;
+      vuc loc_memblock = memblock;
+      assert(loc_memblock.size() > 0);
+      for(unsigned int j=1; j <= cycles; j++){
+        int option = rand()%3;
+        if(option == 0){
+          print_debug( "delete random byte" );
+          if(loc_memblock.size() == 1){
+            std::cerr << "Too short program: cannot delete byte" << std::endl;
+            continue;
+          }
+          unsigned pos_del = rand()%loc_memblock.size();
+          if(DEBUG) printf("delete byte at position %d\n", pos_del);
+          loc_memblock.erase( loc_memblock.begin()+pos_del);
+        } else if (option == 1) {
+          print_debug( "add random byte at random position" );
+          unsigned pos_add = rand()%loc_memblock.size();
+          char val = rand()%UCHAR_MAX;
+          if(DEBUG) printf("add byte %02hhx at position %d\n", val, pos_add);
+          loc_memblock.insert( loc_memblock.begin()+pos_add, val);
+        } else if (option == 2) {
+          print_debug( "change random byte" );
+          unsigned pos_change = rand()%loc_memblock.size();
+          char val = rand()%UCHAR_MAX;
+          if(DEBUG) printf("change byte at position %d to %02hhx\n", pos_change, val);
+          loc_memblock[pos_change] = val;
+        } else {
+          std::cerr << "option must be one of 1,2,3, got " << option << std::endl;
+          exit(1);
+        }    }
+      print_debug( "finished changes" );
+
+      /********************  compare to old genes   ********************/
+      vuc vmyha = my_hash(loc_memblock);    // get hash of gene = vuc
+      std::pair <std::multimap<vuc,vuc>::iterator, std::multimap<vuc,vuc>::iterator> ret;
+      ret = genepool.equal_range(vmyha);
+      bool found_old = false;
+      for (std::multimap<vuc,vuc>::iterator it=ret.first; it!=ret.second; ++it){
+        // compare new vuc to all previous ones. if old found => continue
+        if(loc_memblock == it->second){
+          print_status(now);
+          found_old = true;
+          break;
         }
-        unsigned pos_del = rand()%loc_memblock.size();
-        if(DEBUG) printf("delete byte at position %d\n", pos_del);
-        loc_memblock.erase( loc_memblock.begin()+pos_del);
-      } else if (option == 1) {
-        print_debug( "add random byte at random position" );
-        unsigned pos_add = rand()%loc_memblock.size();
-        char val = rand()%UCHAR_MAX;
-        if(DEBUG) printf("add byte %02hhx at position %d\n", val, pos_add);
-        loc_memblock.insert( loc_memblock.begin()+pos_add, val);
-      } else if (option == 2) {
-        print_debug( "change random byte" );
-        unsigned pos_change = rand()%loc_memblock.size();
-        char val = rand()%UCHAR_MAX;
-        if(DEBUG) printf("change byte at position %d to %02hhx\n", pos_change, val);
-        loc_memblock[pos_change] = val;
-      } else {
-        std::cerr << "option must be one of 1,2,3, got " << option << std::endl;
-        exit(1);
-      }    }
-    print_debug( "finished changes" );
+      }
+      if(found_old) continue;
+      genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
+      now.poolsize = genepool.size();
 
-    /********************  compare to old genes   ********************/
-    vuc vmyha = my_hash(loc_memblock);    // get hash of gene = vuc
-    std::pair <std::multimap<vuc,vuc>::iterator, std::multimap<vuc,vuc>::iterator> ret;
-    ret = genepool.equal_range(vmyha);
-    bool found_old = false;
-    for (std::multimap<vuc,vuc>::iterator it=ret.first; it!=ret.second; ++it){
-      // compare new vuc to all previous ones. if old found => continue
-      if(loc_memblock == it->second){
+      std::string filename = write_new_cell(loc_memblock);
+      std::string filename_cp = filename;
+
+      /********************  execute with sample input text ********************/
+      std::string erroutput = my_system("timeout 1s " + filename + " < "
+                                        + PATH_CELL + "input > "+ PATH_CELL + "output; echo $?");
+      if(std::atoi(erroutput.c_str()) == 124){
+        std::cout << "##### program took too long, aborting ####\r" << std::flush;
+        remove(filename.c_str());
         print_status(now);
-        found_old = true;
+        continue;
+      }
+
+      /******************** check re-compilation of self ********************/
+      write_progcell(loc_memblock);
+      my_system(filename + " < " + PATH_CELL + "progcell > " + PATH_CELL + "outcell");
+      vuc outblock = check_reproductive();
+
+      if(outblock == loc_memblock){
+        successful_reproduction += 1;
+        now.nu++;
+        print_status(now);
+        // store_cell_in_reproduce_set(loc_memblock);
+
+        double cosphi = check_training_performance();
+        std::cout << "  similarity: " << cosphi << std::endl;
+
+        // store similarity = fitness output alongside the output, e.g. in its name
+        filename_cp += "_" + std::to_string(cosphi);
+        my_system("mv " + filename + " " + filename_cp);
+        chmod(filename_cp.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+        my_system("mv " + filename_cp + " " + PATH_REPRODUCE);
+      } else {
+        print_status(now);
+      }
+
+      remove(filename.c_str());
+      remove((PATH_CELL + "outcell").c_str());
+      remove((PATH_CELL + "output").c_str());
+      remove((PATH_CELL + "progcell").c_str());
+
+      if(successful_reproduction > N_LITTER){
         break;
       }
+    } // end for loop on iteration
+
+    /************************ cleanup ****************************************/
+    if(successful_reproduction == 0){
+      remove(random_file.c_str());
+      std::cout << std::endl << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
     }
-    if(found_old) continue;
-    genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
-    now.poolsize = genepool.size();
+  } // end for loop on litter
 
-    std::string filename = write_new_cell(loc_memblock);
-    std::string filename_cp = filename;
-
-    /********************  execute with sample input text ********************/
-    std::string erroutput = my_system("timeout 1s " + filename + " < "
-                          + PATH_CELL + "input > "+ PATH_CELL + "output; echo $?");
-    if(std::atoi(erroutput.c_str()) == 124){
-      std::cout << "##### program took too long, aborting ####\r" << std::flush;
-      remove(filename.c_str());
-      print_status(now);
-      continue;
-    }
-
-    /******************** check re-compilation of self ********************/
-    write_progcell(loc_memblock);
-    my_system(filename + " < " + PATH_CELL + "progcell > " + PATH_CELL + "outcell");
-    vuc outblock = check_reproductive();
-
-    if(outblock == loc_memblock){
-      successful_reproduction += 1;
-      now.nu++;
-      print_status(now);
-      // store_cell_in_reproduce_set(loc_memblock);
-
-      double cosphi = check_training_performance();
-      std::cout << "  similarity: " << cosphi << std::endl;
-
-      // store similarity = fitness output alongside the output, e.g. in its name
-      filename_cp += "_" + std::to_string(cosphi);
-      my_system("mv " + filename + " " + filename_cp);
-      chmod(filename_cp.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
-      my_system("mv " + filename_cp + " " + PATH_REPRODUCE);
-    } else {
-      print_status(now);
-    }
-
-    remove(filename.c_str());
-    remove((PATH_CELL + "outcell").c_str());
-    remove((PATH_CELL + "output").c_str());
-    remove((PATH_CELL + "progcell").c_str());
-
-    if(successful_reproduction > N_LITTER){
-      break;
-    }
-  }
-
-  /************************ cleanup ****************************************/
   restrict_cell_population();
-  if(successful_reproduction == 0){
-    remove(random_file.c_str());
-    std::cout << std::endl << "cell " << random_file << " failed to get reproductive offspring, deleting" << std::endl;
-  }
 }

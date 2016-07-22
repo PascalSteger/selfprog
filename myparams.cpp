@@ -8,7 +8,7 @@
 
 param_struct parse_params( int argc, char* argv[]){
   param_struct fill;
-  fill.Niterations = 1000;
+  fill.Niterations = 300;
   fill.pois_cycles = 0.5;
   // run through all possible runtime parameters with a loop
   for (int i = 1; i < argc; ++i) {

@@ -133,7 +133,7 @@ double check_training_performance(){
   std::fread(&foutmem[0], sizeof(unsigned char), foutmem.size(), fout);
   fclose(fout);
 
-  if(DEBUG || true){
+  if(DEBUG){
     std::cout << std::endl << " output is of size " << foutsize << std::endl;
     print_chars_v(foutmem);
   }
@@ -145,7 +145,7 @@ double check_training_performance(){
   std::fread(&fexpmem[0], sizeof(unsigned char), fexpmem.size(), fexp);
   fclose(fexp);
 
-  if(DEBUG || true){
+  if(DEBUG){
     std::cout << std::endl << " expect is of size " << fexpsize << std::endl;
     print_chars_v(fexpmem);
     std::cout << std::endl;
