@@ -101,3 +101,6 @@ What is the sweet spot?
  based on their performance on sample input
 
  good test score means higher likelihood to get selected
+
+*** TODO enable genepool for 10 litter runs
+- thus using one setup cost for 10 runs with 10 parent cells

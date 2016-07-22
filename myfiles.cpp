@@ -133,8 +133,10 @@ double check_training_performance(){
   std::fread(&foutmem[0], sizeof(unsigned char), foutmem.size(), fout);
   fclose(fout);
 
-  std::cout << std::endl << " output is of size " << foutsize << std::endl;
-  print_chars_v(foutmem);
+  if(DEBUG){
+    std::cout << std::endl << " output is of size " << foutsize << std::endl;
+    print_chars_v(foutmem);
+  }
 
   std::string fnexp = PATH_CELL + "expect";
   FILE * fexp = open_file(fnexp);
@@ -143,9 +145,11 @@ double check_training_performance(){
   std::fread(&fexpmem[0], sizeof(unsigned char), fexpmem.size(), fexp);
   fclose(fexp);
 
-  std::cout << std::endl << " expect is of size " << fexpsize << std::endl;
-  print_chars_v(fexpmem);
-  std::cout << std::endl;
+  if(DEBUG){
+    std::cout << std::endl << " expect is of size " << fexpsize << std::endl;
+    print_chars_v(fexpmem);
+    std::cout << std::endl;
+  }
 
   double cosphi = calc_similarity(foutmem, foutsize, fexpmem, fexpsize);
   return cosphi;}
@@ -201,7 +205,7 @@ void restrict_cell_population(){
   // as long as there are too many cells:
   while(allcells.size() > N_CONCURRENT){
     // find random element
-    std::cout << "find random element " << std::flush << std::endl;
+    // std::cout << "find random element " << std::flush << std::endl;
     std::multimap<std::string, double>::iterator it = allcells.begin();
     std::size_t idx = rand() % allcells.size();
     std::advance(it, idx);
