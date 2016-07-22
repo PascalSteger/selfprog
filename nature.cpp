@@ -50,11 +50,9 @@ int main(int argc, char* argv[]) {
     unsigned int successful_reproduction = 0;
     for(unsigned int iteration = 0; iteration < params.Niterations; iteration++){
       now.N = iteration;
-      // std::cout << "litter " << litter << ", it " << iteration << ": ";
       unsigned int cycles = get_cycles( params.pois_cycles );
 
       vuc loc_memblock = memblock;
-      assert(loc_memblock.size() > 0);
       for(unsigned int j=1; j <= cycles; j++){
         int option = rand()%3;
         if(option == 0){
@@ -108,7 +106,7 @@ int main(int argc, char* argv[]) {
       std::string erroutput = my_system("timeout 1s " + filename + " < "
                                         + PATH_CELL + "input > "+ PATH_CELL + "output; echo $?");
       if(std::atoi(erroutput.c_str()) == 124){
-        std::cout << "##### program took too long, aborting ####\r" << std::flush;
+        std::cout << "######## program took too long, aborting #######\r" << std::flush;
         remove(filename.c_str());
         print_status(now);
         continue;
@@ -119,16 +117,15 @@ int main(int argc, char* argv[]) {
       my_system(filename + " < " + PATH_CELL + "progcell > " + PATH_CELL + "outcell");
       vuc outblock = check_reproductive();
 
-      if(outblock == loc_memblock){
+      if(check_reproduction_performance(loc_memblock, outblock) > 0.95){
         successful_reproduction += 1;
         now.nu++;
         print_status(now);
-        // store_cell_in_reproduce_set(loc_memblock);
 
         double cosphi = check_training_performance();
         std::cout << "  similarity: " << cosphi << std::endl;
 
-        // store similarity = fitness output alongside the output, e.g. in its name
+        // store fitness = similarity alongside the output, e.g. in its name
         filename_cp += "_" + std::to_string(cosphi);
         my_system("mv " + filename + " " + filename_cp);
         chmod(filename_cp.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);

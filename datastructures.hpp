@@ -7,7 +7,7 @@ typedef std::vector<unsigned char> vuc;
 
 struct param_struct {
   unsigned int Niterations;
-  unsigned int Nlitters = 3;
+  unsigned int Nlitters = 30;
   float pois_cycles;};
 
 struct status_struct {

@@ -154,6 +154,24 @@ double check_training_performance(){
   double cosphi = calc_similarity(foutmem, foutsize, fexpmem, fexpsize);
   return cosphi;}
 
+double check_reproduction_performance(vuc origin, vuc repro){
+  // determine how well reproduced cell compares to input cell
+
+  if(DEBUG){
+    std::cout << std::endl << " origin is of size " << origin.size() << std::endl;
+    print_chars_v(origin);
+  }
+
+  if(DEBUG){
+    std::cout << std::endl << " repro is of size " << repro.size() << std::endl;
+    print_chars_v(repro);
+    std::cout << std::endl;
+  }
+
+  double cosphi = calc_similarity(origin, origin.size(), repro, repro.size());
+  if ( cosphi > 0 ) std::cout << " repro similarity: " << cosphi << std::flush << std::endl;
+  return cosphi;}
+
 std::multimap<std::string, double> get_directory_content(std::string mydir){
   std::multimap<std::string, double> dircontents;
   DIR *dir;
