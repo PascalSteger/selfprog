@@ -27,15 +27,20 @@ _start:
 
 ;;; Now populate the array with random data
 ;;; TODO move to 32 bit
-    mov rdi, rax                    ; The file descriptor from before
-    xor rax, rax                    ; read(...) is x64 syscall #0
-    mov rsi, DataToConvert          ; Output to memory for conversion
-    mov rdx, 1                      ; length to read, in bytes (1 quadword)
-    syscall
+    ;; mov rdi, rax                    ; The file descriptor from before
+    ;; xor rax, rax                    ; read(...) is x64 syscall #0
+    ;; mov rsi, DataToConvert          ; Output to memory for conversion
+    ;; mov rdx, 1                      ; length to read, in bytes (1 quadword)
+    ;; syscall
 
+    mov ebx, eax                ; the file descriptor from before
+    mov eax, 0                  ; read(...) is syscall #0
+    mov ecx, DataToConvert      ; output to memory for conversion
+    mov edx, 1                  ; length to read, in bytes
+    int 80h                     ; call the kernel
 
-    cmp rax, 1                      ; If we didn't get all the data...
-    jne Die                         ; ...exit the program
+    cmp eax, 1                  ; If we did not get all the data...
+    jne Die                     ; ...exit the program
 
 ;;; output, with gcc
 ;;; print string
@@ -48,5 +53,5 @@ _start:
 Die:
     ;; Call exit(EXIT_ SUCCESS)
     mov eax, 60                             ; exit() is x64 syscall #60
-    xor rdi, rdi                            ; EXIT_SUCCESS = 0  written into rdi
+    xor edi, edi                            ; EXIT_SUCCESS = 0  written into rdi
     syscall

@@ -12,7 +12,7 @@ devurandom: devurandom.asm
 	gcc -o devurandom devurandom.o
 
 min_devurandom: min_devurandom.asm
-	nasm -f elf32 min_devurandom.asm -o min_devurandom.o
+	nasm -f elf64 min_devurandom.asm -o min_devurandom.o
 	ld min_devurandom.o -o min_devurandom
 # gcc -o min_devurandom min_devurandom.o
 
