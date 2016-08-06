@@ -107,7 +107,7 @@ What is the sweet spot?
 ** creation of intelligent answers
 - 1:1 translation needed for accepting cell as "reproductive"
 - completely prohibits intelligent answer to input_111 pattern if expect is shifted
-- better: allow small changes in reproduction, search for, say, 99% fidelity, allowing other output
+*** DONE better: allow small changes in reproduction, search for, say, 99% fidelity, allowing other output
 
 *** pattern training
 **** differing length outputs
@@ -120,5 +120,14 @@ What is the sweet spot?
 
 *** randomness
 **** include source of randomness in cell
-- either as additional input, e.g. via 1 byte from /dev/random at fixed position
-- or via a system call from inside
+***** either as additional input, e.g. via 1 byte from /dev/random at fixed position
+***** or via a system call from inside
+  - done that, in outside program
+****** TODO convert to 32bit program
+****** TODO disassemble
+****** TODO understand structure
+****** TODO copy data section with names to data section in hex1
+****** TODO realign labels/jump addresses in hex1
+****** TODO copy procedure to read /dev/urandom into hex1
+****** TODO realign labels/jump addresses in hex1
+****** TODO check recompilation

@@ -1,7 +1,32 @@
 CFLAGS = -g -O0 #-fpermissive
 CXXFLAGS = -g -O0 -std=c++11
 
-all: nature
+all: nature helloworld helloworld64 readwritefile putch devurandom min_devurandom
+
+putch: putch.asm
+	nasm -f elf putch.asm
+
+
+devurandom: devurandom.asm
+	nasm -f elf64 devurandom.asm -o devurandom.o
+	gcc -o devurandom devurandom.o
+
+min_devurandom: min_devurandom.asm
+	nasm -f elf32 min_devurandom.asm -o min_devurandom.o
+	ld min_devurandom.o -o min_devurandom
+# gcc -o min_devurandom min_devurandom.o
+
+readwritefile: readwritefile.asm
+	nasm -f elf64 readwritefile.asm -o readwritefile.o
+	ld readwritefile.o -o readwritefile
+
+helloworld: helloworld.asm
+	nasm -f elf32 helloworld.asm -o helloworld.o
+	gcc -m32 -o helloworld helloworld.o
+
+helloworld64: helloworld64.asm
+	nasm -f elf64 helloworld64.asm -o helloworld64.o
+	gcc -o helloworld64 helloworld64.o
 
 timestamp: timestamp.cpp timestamp.hpp
 	g++ $(CXXFLAGS) -c timestamp.cpp
