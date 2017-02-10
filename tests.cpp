@@ -3,7 +3,7 @@
 #include <fstream>       /* ifstream, ofstream */
 #include <sys/stat.h>
 #include <vector>
-#include <pstream.h>
+#include <pstream.h>     /* redi. install dev-cpp/pstreams */
 #include <strings.h>
 #include "intelligence.hpp"   /* equalFiles */
 #include "mysystem.hpp"       /* my_mkdir */

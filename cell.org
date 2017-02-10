@@ -1,11 +1,17 @@
 Life in my Computer
 
-* http://www.detectingdesign.com/dnamutationrates.html
+http://www.detectingdesign.com/dnamutationrates.html
 * start with compiler
+  :PROPERTIES:
+  :ID:       4e164cd3-6e10-47b3-b876-b02a83ba23a9
+  :END:
 http://homepage.ntlworld.com/edmund.grimley-evans/bcompiler.html
 stored in ~/dev/bcompiler
 
 * look at hex1
+  :PROPERTIES:
+  :ID:       335b248b-9568-4d31-9327-a63e63f91fbe
+  :END:
 hex1.he is human-readable, commented file from hex1, in i386 assembler
 
 od -An -tx1 hex1
@@ -45,50 +51,69 @@ od -An -tx1 hexi
 basically, it takes the written characters and translates them to hexadecimal numbers in main memory
 
 * create minimal gene from hex1.he: remove all comments, tabs, line breaks:
+  :PROPERTIES:
+  :ID:       333cbf29-412b-4315-83cd-6215229cb897
+  :END:
 
 cat cell.he
 
 7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 02 00 03 00 01 00 00 00 54 80 04 08 34 00 00 00 00 00 00 00 00 00 00 00 34 00 20 00 01 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 80 04 08 00 80 04 08 bf 00 00 00 bf 00 00 00 05 00 00 00 00 10 00 00 e8 25 00 00 00 c1 e0 04 50 e8 1c 00 00 00 01 04 24 e8 03 00 00 00 58 eb e7 31 db 43 8d 4c 24 04 89 da b8 04 00 00 00 cd 80 c3 e8 1f 00 00 00 83 f8 23 75 0c e8 15 00 00 00 83 f8 0a 75 f6 eb ea 83 e8 30 7c e5 83 f8 30 7c 03 83 e8 27 c3 6a 00 31 db 89 e1 89 da 42 b8 03 00 00 00 cd 80 85 c0 74 02 58 c3 31 c0 89 c3 40 cd 80
 
-* compile it with hex1:
+** compile it with hex1:
+   :PROPERTIES:
+   :ID:       b56e762a-4e30-46dc-921e-fbbdf22b2c7a
+   :END:
 
-./hex1 < cell.he > cell
-od -An -tx1 cell
+ ./hex1 < cell.he > cell
+ od -An -tx1 cell
 
- 7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00
- 02 00 03 00 01 00 00 00 54 80 04 08 34 00 00 00
- 00 00 00 00 00 00 00 00 34 00 20 00 01 00 00 00
- 00 00 00 00 01 00 00 00 00 00 00 00 00 80 04 08
- 00 80 04 08 bf 00 00 00 bf 00 00 00 05 00 00 00
- 00 10 00 00 e8 25 00 00 00 c1 e0 04 50 e8 1c 00
- 00 00 01 04 24 e8 03 00 00 00 58 eb e7 31 db 43
- 8d 4c 24 04 89 da b8 04 00 00 00 cd 80 c3 e8 1f
- 00 00 00 83 f8 23 75 0c e8 15 00 00 00 83 f8 0a
- 75 f6 eb ea 83 e8 30 7c e5 83 f8 30 7c 03 83 e8
- 27 c3 6a 00 31 db 89 e1 89 da 42 b8 03 00 00 00
- cd 80 85 c0 74 02 58 c3 31 c0 89 c3 40 cd 80
+  7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00
+  02 00 03 00 01 00 00 00 54 80 04 08 34 00 00 00
+  00 00 00 00 00 00 00 00 34 00 20 00 01 00 00 00
+  00 00 00 00 01 00 00 00 00 00 00 00 00 80 04 08
+  00 80 04 08 bf 00 00 00 bf 00 00 00 05 00 00 00
+  00 10 00 00 e8 25 00 00 00 c1 e0 04 50 e8 1c 00
+  00 00 01 04 24 e8 03 00 00 00 58 eb e7 31 db 43
+  8d 4c 24 04 89 da b8 04 00 00 00 cd 80 c3 e8 1f
+  00 00 00 83 f8 23 75 0c e8 15 00 00 00 83 f8 0a
+  75 f6 eb ea 83 e8 30 7c e5 83 f8 30 7c 03 83 e8
+  27 c3 6a 00 31 db 89 e1 89 da 42 b8 03 00 00 00
+  cd 80 85 c0 74 02 58 c3 31 c0 89 c3 40 cd 80
 
-and make it executable
+ and make it executable
 
-chmod ug+x cell
+ chmod ug+x cell
 
-* now compile cell.he with cell
+** now compile cell.he with cell
+   :PROPERTIES:
+   :ID:       221062b7-080d-42e0-a88d-97dc62f42fcf
+   :END:
 
-./cell < cell.he > celli
-od -An -tx1 -w1024 celli
- 7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 02 00 03 00 01 00 00 00 54 80 04 08 34 00 00 00 00 00 00 00 00 00 00 00 34 00 20 00 01 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 80 04 08 00 80 04 08 bf 00 00 00 bf 00 00 00 05 00 00 00 00 10 00 00 e8 25 00 00 00 c1 e0 04 50 e8 1c 00 00 00 01 04 24 e8 03 00 00 00 58 eb e7 31 db 43 8d 4c 24 04 89 da b8 04 00 00 00 cd 80 c3 e8 1f 00 00 00 83 f8 23 75 0c e8 15 00 00 00 83 f8 0a 75 f6 eb ea 83 e8 30 7c e5 83 f8 30 7c 03 83 e8 27 c3 6a 00 31 db 89 e1 89 da 42 b8 03 00 00 00 cd 80 85 c0 74 02 58 c3 31 c0 89 c3 40 cd 80
-
-* TADA!
+ ./cell < cell.he > celli
+ od -An -tx1 -w1024 celli
+  7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 02 00 03 00 01 00 00 00 54 80 04 08 34 00 00 00 00 00 00 00 00 00 00 00 34 00 20 00 01 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 80 04 08 00 80 04 08 bf 00 00 00 bf 00 00 00 05 00 00 00 00 10 00 00 e8 25 00 00 00 c1 e0 04 50 e8 1c 00 00 00 01 04 24 e8 03 00 00 00 58 eb e7 31 db 43 8d 4c 24 04 89 da b8 04 00 00 00 cd 80 c3 e8 1f 00 00 00 83 f8 23 75 0c e8 15 00 00 00 83 f8 0a 75 f6 eb ea 83 e8 30 7c e5 83 f8 30 7c 03 83 e8 27 c3 6a 00 31 db 89 e1 89 da 42 b8 03 00 00 00 cd 80 85 c0 74 02 58 c3 31 c0 89 c3 40 cd 80
 
 * run everything in /tmp dir, to keep living things in memory
+  :PROPERTIES:
+  :ID:       a092d7de-3694-4c6f-8806-fd9cc18cf4f1
+  :END:
 * backup stages to ~/dev/cell
-
+  :PROPERTIES:
+  :ID:       f3c00df8-e032-484d-bb62-cea9f988f2a6
+  :END:
 * create new group with very restrictive rights
-
+  :PROPERTIES:
+  :ID:       269d7bab-f4f8-437b-a4e3-5f1d4152bdb4
+  :END:
 * create empty sample program
+  :PROPERTIES:
+  :ID:       d7663212-75d1-4444-81ee-b96061bb9af4
+  :END:
 touch sample
-
 * create bash control script
+  :PROPERTIES:
+  :ID:       e6633dfd-d733-48f6-9774-ea85ded2af8e
+  :END:
 
 - backup running gene stock every N=1 tries
 
@@ -106,19 +131,21 @@ touch sample
   cellnew < any other gene seq > cellcheck
   - has to finish in 10sec
   - if yes: add cellcheck to gene stock
-
 ** generate a random byte:
+   :PROPERTIES:
+   :ID:       474a19a2-cbdc-473c-8aa9-482bd2ed5b68
+   :END:
 od -vAn -N1 -tx1 /dev/urandom | tr -cd 0123456789abcdef
-
 ** write a given byte to fourth position
+   :PROPERTIES:
+   :ID:       0f300e14-70e2-45fe-8a6f-bb7617dbbaa8
+   :END:
 echo -ne \\xFE |dd conv=notrunc bs=1 count=1 seek=3 of=celli
-
-
 ** better way: write program in python for control
-
+   :PROPERTIES:
+   :ID:       7165b8bf-3f77-405b-96d0-ba30b79b251c
+   :END:
 ** better still: write program in assembler
-
-
-
-* find true minimal compiler
-* find intelligence
+   :PROPERTIES:
+   :ID:       f6cdbf92-1948-45b8-9123-39fa2900de70
+   :END:

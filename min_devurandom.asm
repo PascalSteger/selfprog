@@ -1,4 +1,4 @@
-[bits 32]                      ; 32 or 64-bit code
+[bits 64]                      ; 32 or 64-bit code
 
     section .data                  ; Data segment
 Filename:
@@ -9,10 +9,10 @@ DataToConvert:
 
     section .text
 ;;; extern printf
-;;; global main
+;; global main
+;; main:                           ; for gcc
 
-;;; main:                           ; for gcc
-global _start                   ;
+global _start
 _start:
 ;;; Open /dev/urandom
 ;;;     mov rax, 2                      ; open(...) is x64 syscall #2
@@ -26,7 +26,6 @@ _start:
     int 80h
 
 ;;; Now populate the array with random data
-;;; TODO move to 32 bit
     ;; mov rdi, rax                    ; The file descriptor from before
     ;; xor rax, rax                    ; read(...) is x64 syscall #0
     ;; mov rsi, DataToConvert          ; Output to memory for conversion
@@ -34,7 +33,7 @@ _start:
     ;; syscall
 
     mov ebx, eax                ; the file descriptor from before
-    mov eax, 0                  ; read(...) is syscall #0
+    mov eax, 3                  ; read(...) is syscall #3
     mov ecx, DataToConvert      ; output to memory for conversion
     mov edx, 1                  ; length to read, in bytes
     int 80h                     ; call the kernel
@@ -44,11 +43,11 @@ _start:
 
 ;;; output, with gcc
 ;;; print string
-    mov eax,4            ; The system call for write (sys_write)
+    mov eax,4                   ; The system call for write (sys_write)
     mov ebx,1                   ; File descriptor 1 - standard output
-    mov ecx,DataToConvert        ; Put the offset of hello in ecx                  ;; was mov ecx,hello
-    mov edx,1     ; helloLen is a constant, so we don't need to say ;; was mov edx,helloLen
-    int 80h              ; Call the kernel
+    mov ecx,DataToConvert       ; Put the offset of hello in ecx                  ;; was mov ecx,hello
+    mov edx,1                   ; helloLen is a constant, so we don't need to say ;; was mov edx,helloLen
+    int 80h                     ; Call the kernel
 
 Die:
     ;; Call exit(EXIT_ SUCCESS)

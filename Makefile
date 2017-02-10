@@ -1,11 +1,10 @@
 CFLAGS = -g -O0 #-fpermissive
 CXXFLAGS = -g -O0 -std=c++11
 
-all: nature helloworld helloworld64 readwritefile putch devurandom min_devurandom
+all: nature #helloworld helloworld64 readwritefile putch devurandom min_devurandom
 
 putch: putch.asm
 	nasm -f elf putch.asm
-
 
 devurandom: devurandom.asm
 	nasm -f elf64 devurandom.asm -o devurandom.o
