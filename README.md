@@ -31,9 +31,9 @@ In a third step, we need to increase the input to pose a real problem:
   - kudos for differing outputs after repetitive runs (may need injection of random element generator in start program, i.e. storing part of random number generator in a register and using that)
 
 
-nature.sh
----------
-Linux-shell based program to steer modifications and recompilation check. This script intends to emulate nature in the process of evolution.
+nature.cpp
+----------
+Program to steer modifications and recompilation check. This script intends to emulate nature in the process of evolution.
 
 Includes a framework for feeding a program an external input file, capturing the output, and rewarding intelligence.
 
@@ -45,7 +45,9 @@ recompiles
 ----------
 Directory to hold current programs that not only execute without error message, but also are able to reproduce themselves from their byte output.
 
-
+Installation
+------------
+Run "make clean && make" to compile, and then "./nature" from inside the directory.
 
 TODO
 ----
@@ -68,6 +70,6 @@ v1.0 initial start -- nature.sh
 
 
 
-GPL v.3 2015
+GPL v.3 2015-2017
 Pascal Steger
 pascal@steger.aero

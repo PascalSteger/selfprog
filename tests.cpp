@@ -9,6 +9,8 @@
 #include "intelligence.hpp"   /* equalFiles */
 #include "mysystem.hpp"       /* my_mkdir */
 
+// run tests via ./nature -t
+
 void test_my_mkdir( void ) {
   std::cout << " - test_my_mkdir" << std::endl;
   std::string dirname = "/home/au/dev/selfprog/test/";
