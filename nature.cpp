@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #include "paths.hpp"
-#include "tests.hpp"
+//#include "tests.hpp"
 #include "intelligence.hpp"
 #include "datastructures.hpp" /* typedefs, vuc*/
 #include "similarity.hpp"     /* calc_similarity */

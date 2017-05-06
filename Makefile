@@ -3,6 +3,9 @@ CXXFLAGS = -g -O0 -std=c++11
 
 all: nature #helloworld helloworld64 readwritefile putch devurandom min_devurandom
 
+run_tests: nature
+	./nature -t
+
 putch: putch.asm
 	nasm -f elf putch.asm
 

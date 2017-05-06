@@ -18,8 +18,11 @@ param_struct parse_params( int argc, char* argv[]){
     }
     else if ((arg == "-t") || (arg == "--test")) {
       test_my_mkdir();
+      test_my_system();
+      test_equalFiles();
       //test_timestamp();
       //test_copy();
+      std::cout << "All unit tests passed!" << std::endl;
       exit(0);
     } else if ((arg == "-i") || (arg == "--iterations")) {
       if (i + 1 < argc) { // Make sure we aren't at the end of argv!
