@@ -7,7 +7,6 @@ http://www.detectingdesign.com/dnamutationrates.html
   :END:
 http://homepage.ntlworld.com/edmund.grimley-evans/bcompiler.html
 stored in ~/dev/bcompiler
-
 * look at hex1
   :PROPERTIES:
   :ID:       335b248b-9568-4d31-9327-a63e63f91fbe

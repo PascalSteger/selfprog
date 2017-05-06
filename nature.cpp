@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
       genepool.insert(std::pair<vuc, vuc>(vmyha, loc_memblock));
       now.poolsize = genepool.size();
 
-      std::string filename = write_new_cell(loc_memblock);
+      std::string filename    = write_new_cell(loc_memblock);
       std::string filename_cp = filename;
 
       /********************  execute with sample input text ********************/
